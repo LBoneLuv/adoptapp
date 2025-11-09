@@ -6,6 +6,8 @@ import Link from "next/link"
 import { getShelterById } from "@/lib/supabase/queries"
 import { notFound } from "next/navigation"
 
+export const dynamic = "force-dynamic"
+
 export default async function ProtectoraDetailPage({ params }: { params: { id: string } }) {
   let shelter
   try {
