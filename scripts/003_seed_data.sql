@@ -1,0 +1,2 @@
+-- This script will be run after users sign up to add some initial data
+-- For now, we'll leave it empty and populate data through the app

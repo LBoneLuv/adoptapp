@@ -1,0 +1,15 @@
+-- INSTRUCTIONS FOR CREATING THE FIRST SUPER ADMIN:
+-- 
+-- After running all previous migration scripts, you need to manually create
+-- the first super admin by running ONE of these commands:
+--
+-- Option 1: Make a regular user a super admin (replace with your email)
+-- UPDATE profiles SET role = 'super_admin' WHERE email = 'tu_email@ejemplo.com';
+--
+-- Option 2: Make a shelter user a super admin (replace with your email)
+-- UPDATE shelters SET role = 'super_admin' WHERE email = 'tu_email_protectora@ejemplo.com';
+--
+-- After creating the first super admin, you can access the super admin panel at:
+-- /admin/super/protectoras
+--
+-- This route is protected and only accessible by users with role = 'super_admin'
