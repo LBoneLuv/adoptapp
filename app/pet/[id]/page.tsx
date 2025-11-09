@@ -8,7 +8,8 @@ import { notFound } from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
-export default async function PetDetailPage({ params }: { params: { id: string } }) {
+export default async function PetDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const { data: animal, error } = await supabase
@@ -22,7 +23,7 @@ export default async function PetDetailPage({ params }: { params: { id: string }
         profile_image_url
       )
     `)
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (error || !animal) {
