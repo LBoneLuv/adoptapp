@@ -18,7 +18,7 @@ export function BottomNavigation() {
         } = await supabase.auth.getUser()
 
         if (user) {
-          const { data } = await supabase.from("shelters").select("id").eq("id", user.id).single()
+          const { data } = await supabase.from("shelters").select("id").eq("id", user.id).maybeSingle()
           setIsShelter(!!data)
         }
       } catch (error) {
