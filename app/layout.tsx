@@ -12,10 +12,10 @@ const _plusJakartaSans = V0_Font_Plus_Jakarta_Sans({ subsets: ['latin'], weight:
 const _ibmPlexMono = V0_Font_IBM_Plex_Mono({ subsets: ['latin'], weight: ["100","200","300","400","500","600","700"] })
 const _lora = V0_Font_Lora({ subsets: ['latin'], weight: ["400","500","600","700"] })
 
-const _poppins = Poppins({
+const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins",
+  variable: "--font-sans",
 })
 
 export const metadata: Metadata = {
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     title: "Adoptapp",
   },
   applicationName: "Adoptapp",
-  themeColor: "#f97316",
+  themeColor: "#6750A4",
   viewport: {
     width: "device-width",
     initialScale: 1,
@@ -37,10 +37,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/icon-192x192.jpg", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512x512.jpg", sizes: "512x512", type: "image/png" },
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: "/icon-152x152.jpg", sizes: "152x152", type: "image/png" }],
+    apple: [{ url: "/icon-152x152.png", sizes: "152x152", type: "image/png" }],
   },
 }
 
@@ -52,7 +52,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        <link rel="apple-touch-icon" href="/icon-152x152.jpg" />
+        <link rel="apple-touch-icon" href="/icon-152x152.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Adoptapp" />
@@ -76,7 +76,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`font-sans antialiased`}>
+      <body className={`${poppins.variable} font-sans antialiased`}>
         {children}
         <Toaster />
         <Analytics />
