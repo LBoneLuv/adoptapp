@@ -2,12 +2,13 @@
 
 import type React from "react"
 
-import { Camera } from "lucide-react"
+import { Camera, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
 type Shelter = {
   id: string
@@ -20,6 +21,7 @@ type Shelter = {
 
 export default function EditarPerfilProtectoraPage() {
   const { toast } = useToast()
+  const router = useRouter()
   const [shelter, setShelter] = useState<Shelter | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -49,6 +51,16 @@ export default function EditarPerfilProtectoraPage() {
 
     loadShelter()
   }, [])
+
+  async function handleLogout() {
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      router.push("/login")
+    } catch (error) {
+      console.error("Error logging out:", error)
+    }
+  }
 
   async function handleSave() {
     if (!shelter) return
@@ -303,6 +315,15 @@ export default function EditarPerfilProtectoraPage() {
         >
           {saving ? "Guardando..." : "Guardar Cambios"}
         </Button>
+
+        <Button
+          onClick={handleLogout}
+          variant="outline"
+          className="w-full mt-4 border-2 border-[#BA1A1A] text-[#BA1A1A] hover:bg-[#BA1A1A] hover:text-white rounded-full text-base font-semibold h-11 bg-transparent"
+        >
+          <LogOut className="w-5 h-5 mr-2" />
+          Cerrar Sesión
+        </Button>
       </div>
 
       {/* Admin Bottom Navigation */}
@@ -310,7 +331,7 @@ export default function EditarPerfilProtectoraPage() {
         <div className="flex items-center justify-around max-w-md mx-auto">
           <Link
             href="/admin/animales"
-            className="flex flex-col items-center gap-1 py-2 px-6 text-[#49454F] hover:text-[#6750A4] transition-colors"
+            className="flex flex-col items-center gap-1 py-2 px-4 text-[#49454F] hover:text-[#6750A4] transition-colors"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
               <ellipse cx="8.5" cy="5" rx="2.5" ry="3" />
@@ -321,7 +342,7 @@ export default function EditarPerfilProtectoraPage() {
             </svg>
             <span className="text-xs font-medium">Animales</span>
           </Link>
-          <button className="flex flex-col items-center gap-1 py-2 px-6 text-[#6750A4]">
+          <button className="flex flex-col items-center gap-1 py-2 px-4 text-[#6750A4]">
             <svg
               className="w-6 h-6"
               viewBox="0 0 24 24"
@@ -335,6 +356,23 @@ export default function EditarPerfilProtectoraPage() {
             </svg>
             <span className="text-xs font-medium">Mi Perfil</span>
           </button>
+          <Link
+            href="/adopta"
+            className="flex flex-col items-center gap-1 py-2 px-4 text-[#49454F] hover:text-[#6750A4] transition-colors"
+          >
+            <svg
+              className="w-6 h-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span className="text-xs font-medium">App</span>
+          </Link>
         </div>
       </nav>
     </div>

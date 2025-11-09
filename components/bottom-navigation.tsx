@@ -2,9 +2,32 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
 
 export function BottomNavigation() {
   const pathname = usePathname()
+  const [isShelter, setIsShelter] = useState(false)
+
+  useEffect(() => {
+    async function checkIfShelter() {
+      try {
+        const supabase = createClient()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+
+        if (user) {
+          const { data } = await supabase.from("shelters").select("id").eq("id", user.id).single()
+          setIsShelter(!!data)
+        }
+      } catch (error) {
+        console.error("Error checking shelter status:", error)
+      }
+    }
+
+    checkIfShelter()
+  }, [])
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-[#FFFBFE] py-2 shadow-[0_-2px_8px_rgba(0,0,0,0.1)] z-[2000]">
@@ -67,6 +90,26 @@ export function BottomNavigation() {
           </svg>
           <span className="text-xs font-medium">Comunidad</span>
         </Link>
+
+        {isShelter && (
+          <Link
+            href="/admin/animales"
+            className="flex flex-col items-center gap-1 py-2 flex-1 text-[#D0BCFF] hover:text-[#6750A4] transition-colors"
+          >
+            <svg
+              className="w-6 h-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            <span className="text-xs font-medium">Admin</span>
+          </Link>
+        )}
       </div>
     </nav>
   )

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Camera } from "lucide-react"
+import { Camera, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
@@ -52,6 +52,16 @@ export default function PerfilPage() {
       console.error("Error loading profile:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      router.push("/login")
+    } catch (error) {
+      console.error("Error logging out:", error)
     }
   }
 
@@ -257,6 +267,15 @@ export default function PerfilPage() {
             className="w-full mt-8 bg-[#6750A4] hover:bg-[#7965AF] text-white rounded-full h-14 text-base font-semibold shadow-lg"
           >
             {saving ? "Guardando..." : "Guardar Cambios"}
+          </Button>
+
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="w-full mt-4 border-2 border-[#BA1A1A] text-[#BA1A1A] hover:bg-[#BA1A1A] hover:text-white rounded-full h-14 text-base font-semibold bg-transparent"
+          >
+            <LogOut className="w-5 h-5 mr-2" />
+            Cerrar Sesión
           </Button>
         </div>
       </div>

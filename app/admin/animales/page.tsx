@@ -149,7 +149,7 @@ export default function GestionarAnimalesPage() {
       {/* Admin Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#FFFBFE] px-4 py-2 shadow-[0_-2px_8px_rgba(0,0,0,0.1)]">
         <div className="flex items-center justify-around max-w-md mx-auto">
-          <button className="flex flex-col items-center gap-1 py-2 px-6 text-[#6750A4]">
+          <button className="flex flex-col items-center gap-1 py-2 px-4 text-[#6750A4]">
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
               <ellipse cx="8.5" cy="5" rx="2.5" ry="3" />
               <ellipse cx="15.5" cy="5" rx="2.5" ry="3" />
@@ -161,7 +161,7 @@ export default function GestionarAnimalesPage() {
           </button>
           <Link
             href="/admin/perfil"
-            className="flex flex-col items-center gap-1 py-2 px-6 text-[#49454F] hover:text-[#6750A4] transition-colors"
+            className="flex flex-col items-center gap-1 py-2 px-4 text-[#49454F] hover:text-[#6750A4] transition-colors"
           >
             <svg
               className="w-6 h-6"
@@ -175,6 +175,23 @@ export default function GestionarAnimalesPage() {
               <circle cx="12" cy="7" r="4" />
             </svg>
             <span className="text-xs font-medium">Mi Perfil</span>
+          </Link>
+          <Link
+            href="/adopta"
+            className="flex flex-col items-center gap-1 py-2 px-4 text-[#49454F] hover:text-[#6750A4] transition-colors"
+          >
+            <svg
+              className="w-6 h-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span className="text-xs font-medium">App</span>
           </Link>
         </div>
       </nav>
