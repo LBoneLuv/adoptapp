@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Eye, EyeOff } from "lucide-react"
@@ -18,7 +18,32 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
   const router = useRouter()
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const supabase = createClient()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (session?.user) {
+        // Check if user is a shelter
+        const { data: shelterData } = await supabase.from("shelters").select("id").eq("id", session.user.id).single()
+
+        if (shelterData) {
+          router.push("/admin/animales")
+        } else {
+          router.push("/adopta")
+        }
+      } else {
+        setIsChecking(false)
+      }
+    }
+
+    checkSession()
+  }, [router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,6 +74,14 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (isChecking) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#FEF7FF]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6750A4]"></div>
+      </div>
+    )
   }
 
   return (

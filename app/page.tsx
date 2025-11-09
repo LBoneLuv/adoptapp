@@ -1,9 +1,47 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { createClient } from "@/lib/supabase/client"
 
 export default function WelcomePage() {
+  const router = useRouter()
+  const [isChecking, setIsChecking] = useState(true)
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const supabase = createClient()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (session?.user) {
+        // Check if user is a shelter
+        const { data: shelterData } = await supabase.from("shelters").select("id").eq("id", session.user.id).single()
+
+        if (shelterData) {
+          router.push("/admin/animales")
+        } else {
+          router.push("/adopta")
+        }
+      } else {
+        setIsChecking(false)
+      }
+    }
+
+    checkSession()
+  }, [router])
+
+  if (isChecking) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#FEF7FF]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6750A4]"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="relative flex flex-col items-center justify-between min-h-screen bg-[#FEF7FF] px-6 py-12">
       {/* Background Image */}

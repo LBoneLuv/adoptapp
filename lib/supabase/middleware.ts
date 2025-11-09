@@ -34,11 +34,11 @@ export async function updateSession(request: NextRequest) {
   )
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
 
   // Redirect unauthenticated users trying to access protected routes
-  if (!user) {
+  if (!session) {
     const url = request.nextUrl.clone()
     url.pathname = "/"
     return NextResponse.redirect(url)
