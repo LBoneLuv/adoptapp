@@ -59,14 +59,29 @@ export function AdoptButton({ animalId, animalName, shelterId }: AdoptButtonProp
 
       if (chatError) throw chatError
 
-      // Create initial message
+      const messageContent = `Estoy interesado en adoptar a ${animalName}`
       const { error: messageError } = await supabase.from("messages").insert({
         chat_id: newChat.id,
         sender_id: user.id,
-        content: `Estoy interesado en adoptar a ${animalName}`,
+        content: messageContent,
       })
 
       if (messageError) throw messageError
+
+      try {
+        await fetch("/api/notifications/send-message", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chatId: newChat.id,
+            messageContent,
+            senderId: user.id,
+          }),
+        })
+      } catch (notifError) {
+        console.error("Error sending notification:", notifError)
+        // Don't block if notification fails
+      }
 
       // Redirect to chat
       router.push(`/chats/${newChat.id}`)

@@ -140,6 +140,21 @@ export default function ChatDetailPage() {
       return
     }
 
+    try {
+      await fetch("/api/notifications/send-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatId: id,
+          messageContent: newMessage.trim(),
+          senderId: currentUserId,
+        }),
+      })
+    } catch (notifError) {
+      console.error("Error sending notification:", notifError)
+      // No bloqueamos el envío del mensaje si falla la notificación
+    }
+
     setNewMessage("")
     setSending(false)
     loadMessages()
