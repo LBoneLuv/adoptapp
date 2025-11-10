@@ -16,6 +16,13 @@ type Shelter = {
   description: string
   profile_image_url: string | null
   cover_image_url: string | null
+  website: string | null
+  social_links: Array<{ platform: string; url: string }>
+}
+
+type SocialLink = {
+  platform: string
+  url: string
 }
 
 export default function EditarPerfilProtectoraPage() {
@@ -26,6 +33,8 @@ export default function EditarPerfilProtectoraPage() {
   const [name, setName] = useState("")
   const [location, setLocation] = useState("")
   const [description, setDescription] = useState("")
+  const [website, setWebsite] = useState("")
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([])
 
   useEffect(() => {
     async function loadShelter() {
@@ -42,6 +51,8 @@ export default function EditarPerfilProtectoraPage() {
           setName(data.name)
           setLocation(data.location)
           setDescription(data.description || "")
+          setWebsite(data.website || "")
+          setSocialLinks(data.social_links || [])
         }
       }
       setLoading(false)
@@ -72,6 +83,8 @@ export default function EditarPerfilProtectoraPage() {
         name,
         location,
         description,
+        website,
+        social_links: socialLinks,
       })
       .eq("id", shelter.id)
 
@@ -213,6 +226,22 @@ export default function EditarPerfilProtectoraPage() {
     }, 3000)
   }
 
+  const addSocialLink = () => {
+    if (socialLinks.length < 3) {
+      setSocialLinks([...socialLinks, { platform: "facebook", url: "" }])
+    }
+  }
+
+  const removeSocialLink = (index: number) => {
+    setSocialLinks(socialLinks.filter((_, i) => i !== index))
+  }
+
+  const updateSocialLink = (index: number, field: "platform" | "url", value: string) => {
+    const updated = [...socialLinks]
+    updated[index][field] = value
+    setSocialLinks(updated)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#FEF7FF]">
@@ -302,6 +331,62 @@ export default function EditarPerfilProtectoraPage() {
               rows={6}
               className="w-full px-4 py-3 bg-[#FFFBFE] border-2 border-[#79747E] rounded-2xl focus:border-[#6750A4] focus:outline-none text-[#1C1B1F] resize-none text-sm"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#49454F] mb-2">Sitio Web</label>
+            <input
+              type="url"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              placeholder="https://ejemplo.com"
+              className="w-full px-4 py-3 bg-[#FFFBFE] border-2 border-[#79747E] rounded-2xl focus:border-[#6750A4] focus:outline-none text-[#1C1B1F] text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#49454F] mb-3">Enlaces a Redes Sociales</label>
+            <div className="space-y-3">
+              {socialLinks.map((link, index) => (
+                <div key={index} className="flex gap-2 items-start">
+                  <select
+                    value={link.platform}
+                    onChange={(e) => updateSocialLink(index, "platform", e.target.value)}
+                    className="w-1/3 px-3 py-3 bg-[#FFFBFE] border-2 border-[#79747E] rounded-2xl focus:border-[#6750A4] focus:outline-none text-[#1C1B1F] text-sm"
+                  >
+                    <option value="facebook">Facebook</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="tiktok">TikTok</option>
+                  </select>
+                  <input
+                    type="url"
+                    value={link.url}
+                    onChange={(e) => updateSocialLink(index, "url", e.target.value)}
+                    placeholder="https://..."
+                    className="flex-1 px-4 py-3 bg-[#FFFBFE] border-2 border-[#79747E] rounded-2xl focus:border-[#6750A4] focus:outline-none text-[#1C1B1F] text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeSocialLink(index)}
+                    className="px-3 py-3 bg-[#BA1A1A] text-white rounded-2xl hover:bg-[#A31515] transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+              {socialLinks.length < 3 && (
+                <Button
+                  type="button"
+                  onClick={addSocialLink}
+                  variant="outline"
+                  className="w-full border-2 border-[#6750A4] text-[#6750A4] hover:bg-[#E8DEF8] rounded-full text-sm font-semibold h-10 bg-transparent"
+                >
+                  + Añadir Red Social
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 

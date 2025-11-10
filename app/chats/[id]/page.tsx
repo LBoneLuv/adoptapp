@@ -140,8 +140,12 @@ export default function ChatDetailPage() {
       return
     }
 
+    console.log("[v0] Mensaje enviado, enviando notificación...")
+    console.log("[v0] Chat ID:", id)
+    console.log("[v0] Sender ID:", currentUserId)
+
     try {
-      await fetch("/api/notifications/send-message", {
+      const response = await fetch("/api/notifications/send-message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -150,8 +154,15 @@ export default function ChatDetailPage() {
           senderId: currentUserId,
         }),
       })
+
+      const result = await response.json()
+      console.log("[v0] Respuesta de API notificaciones:", result)
+
+      if (!response.ok) {
+        console.error("[v0] Error en API notificaciones:", result)
+      }
     } catch (notifError) {
-      console.error("Error sending notification:", notifError)
+      console.error("[v0] Error sending notification:", notifError)
       // No bloqueamos el envío del mensaje si falla la notificación
     }
 

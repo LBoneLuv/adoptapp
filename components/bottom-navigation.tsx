@@ -33,9 +33,46 @@ export function BottomNavigation() {
     <nav className="fixed bottom-0 left-0 right-0 bg-[#FFFBFE] py-2 shadow-[0_-2px_8px_rgba(0,0,0,0.1)] z-[2000]">
       <div className="flex items-center justify-between">
         <Link
-          href="/adopta"
+          href="/principal"
           className={`flex flex-col items-center gap-1 py-2 flex-1 ${
-            pathname?.startsWith("/adopta") ? "text-[#6750A4]" : "text-[#49454F]"
+            pathname?.startsWith("/principal") ? "text-[#6750A4]" : "text-[#49454F]"
+          } hover:text-[#6750A4] transition-colors`}
+        >
+          <img src="/arko-logo.svg" alt="Arko" className="w-6 h-6" />
+          <span className="text-xs font-medium">Arko</span>
+        </Link>
+
+        <Link
+          href="/servicios"
+          className={`flex flex-col items-center gap-1 py-2 flex-1 ${
+            pathname?.startsWith("/servicios") ? "text-[#6750A4]" : "text-[#49454F]"
+          } hover:text-[#6750A4] transition-colors`}
+        >
+          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          <span className="text-xs font-medium">Servicios</span>
+        </Link>
+
+        <Link
+          href="/favoritos"
+          className={`flex flex-col items-center gap-1 py-2 flex-1 ${
+            pathname?.startsWith("/favoritos") ? "text-[#6750A4]" : "text-[#49454F]"
+          } hover:text-[#6750A4] transition-colors`}
+        >
+          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+          <span className="text-xs font-medium">Favoritos</span>
+        </Link>
+
+        <Link
+          href="/mis-animales"
+          className={`flex flex-col items-center gap-1 py-2 flex-1 ${
+            pathname?.startsWith("/mis-animales") ? "text-[#6750A4]" : "text-[#49454F]"
           } hover:text-[#6750A4] transition-colors`}
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -45,50 +82,7 @@ export function BottomNavigation() {
             <ellipse cx="19" cy="10" rx="2" ry="2.5" />
             <path d="M12 10c-2.5 0-4.5 1.5-5 4-.3 1.5.5 3 2 3.5 1 .3 2 .5 3 .5s2-.2 3-.5c1.5-.5 2.3-2 2-3.5-.5-2.5-2.5-4-5-4z" />
           </svg>
-          <span className="text-xs font-medium">Adopta</span>
-        </Link>
-
-        <Link
-          href="/protectoras"
-          className={`flex flex-col items-center gap-1 py-2 flex-1 ${
-            pathname?.startsWith("/protectoras") ? "text-[#6750A4]" : "text-[#49454F]"
-          } hover:text-[#6750A4] transition-colors`}
-        >
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 3l-10 9h3v9h6v-6h2v6h6v-9h3l-10-9z" />
-            <path
-              d="M12 8c-.8 0-1.5.4-1.9 1-.4-.6-1.1-1-1.9-1-.8 0-1.5.4-1.9 1-.3.4-.3.9-.3 1.3 0 1.5 1.5 2.7 3.5 4.5.3.3.8.3 1.1 0 2-1.8 3.5-3 3.5-4.5 0-.4 0-.9-.3-1.3-.5-.6-1.2-1-2-1z"
-              fill="#FFFBFE"
-            />
-          </svg>
-          <span className="text-xs font-medium">Protectoras</span>
-        </Link>
-
-        <Link
-          href="/avisos"
-          className={`flex flex-col items-center gap-1 py-2 flex-1 ${
-            pathname?.startsWith("/avisos") ? "text-[#6750A4]" : "text-[#49454F]"
-          } hover:text-[#6750A4] transition-colors`}
-        >
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-          </svg>
-          <span className="text-xs font-medium">Avisos</span>
-        </Link>
-
-        <Link
-          href="/comunidad"
-          className={`flex flex-col items-center gap-1 py-2 flex-1 ${
-            pathname?.startsWith("/comunidad") ? "text-[#6750A4]" : "text-[#49454F]"
-          } hover:text-[#6750A4] transition-colors`}
-        >
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2h14z" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
-          <span className="text-xs font-medium">Comunidad</span>
+          <span className="text-xs font-medium">Mis animales</span>
         </Link>
 
         {isShelter && (

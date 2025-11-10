@@ -6,13 +6,18 @@ import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { OneSignalProvider } from "@/components/onesignal-provider"
 
+import { Poppins, Geist as V0_Font_Geist, Geist_Mono as V0_Font_Geist_Mono, Source_Serif_4 as V0_Font_Source_Serif_4 } from 'next/font/google'
+
 // Initialize fonts
-import { Poppins } from "next/font/google"
+const _geist = V0_Font_Geist({ subsets: ['latin'], weight: ["100","200","300","400","500","600","700","800","900"] })
+const _geistMono = V0_Font_Geist_Mono({ subsets: ['latin'], weight: ["100","200","300","400","500","600","700","800","900"] })
+const _sourceSerif_4 = V0_Font_Source_Serif_4({ subsets: ['latin'], weight: ["200","300","400","500","600","700","800","900"] })
 
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-sans",
+  variable: "--font-poppins",
+  display: "swap",
 })
 
 export const metadata: Metadata = {
@@ -47,7 +52,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" className={poppins.variable}>
       <head>
         <link rel="apple-touch-icon" href="/icon-152x152.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -73,7 +78,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${poppins.variable} font-sans antialiased`}>
+      <body className={`${poppins.className} antialiased`}>
         <OneSignalProvider />
         {children}
         <Toaster />
