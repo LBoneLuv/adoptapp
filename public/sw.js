@@ -108,9 +108,12 @@ self.addEventListener("push", (event) => {
   const title = data.title || "Adoptapp"
   const options = {
     body: data.body || "Tienes una nueva notificación",
-    icon: "/icon-192x192.jpg",
-    badge: "/icon-72x72.jpg",
+    icon: "/icon-192x192.png",
+    badge: "/icon-72x72.png",
+    tag: data.tag || "adoptapp-notification",
     data: data.url || "/",
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
   }
 
   event.waitUntil(self.registration.showNotification(title, options))

@@ -96,7 +96,7 @@ export default async function ProtectoraDetailPage({ params }: { params: Promise
         <div className="mb-6">
           <h2 className="font-bold text-[#1C1B1F] mb-4 text-base">Nuestros Animales</h2>
           {shelter.animals && shelter.animals.length > 0 ? (
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {shelter.animals.map((animal: any) => (
                 <PetCard
                   key={animal.id}

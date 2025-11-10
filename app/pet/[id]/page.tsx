@@ -1,10 +1,10 @@
 import { ArrowLeft, MapPin, Calendar, Tag, Check, X, ChevronRight, Ruler } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import Image from "next/image"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
+import { AdoptButton } from "@/components/adopt-button"
 
 export const dynamic = "force-dynamic"
 
@@ -268,9 +268,7 @@ export default async function PetDetailPage({ params }: { params: Promise<{ id: 
 
       {/* Bottom CTA */}
       <div className="fixed bottom-0 left-0 right-0 bg-[#FFFBFE] px-4 py-4 shadow-[0_-2px_8px_rgba(0,0,0,0.1)]">
-        <Button className="w-full bg-[#6750A4] hover:bg-[#7965AF] text-white font-semibold py-6 text-lg rounded-full shadow-md">
-          Solicitar Adopción
-        </Button>
+        <AdoptButton animalId={animal.id} animalName={animal.name} shelterId={animal.shelter_id} />
       </div>
     </div>
   )

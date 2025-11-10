@@ -61,9 +61,9 @@ export const PetCard = memo(function PetCard({ pet }: PetCardProps) {
 
           <GenderIcon gender={pet.gender} />
 
-          <div className="absolute bottom-2 left-2 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-md">
-            <MapPin className="w-3.5 h-3.5 text-[#6750A4]" />
-            <span className="text-xs font-medium text-[#1C1B1F]">{pet.location}</span>
+          <div className="absolute bottom-2 left-2 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-md max-w-[calc(100%-1rem)]">
+            <MapPin className="w-3.5 h-3.5 text-[#6750A4] flex-shrink-0" />
+            <span className="text-xs font-medium text-[#1C1B1F] truncate">{pet.location}</span>
           </div>
         </div>
 
