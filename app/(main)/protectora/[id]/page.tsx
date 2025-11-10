@@ -46,30 +46,36 @@ const SocialIcon = ({ platform }: { platform: string }) => {
   }
 }
 
-export default async function ProtectoraDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params
-
-  return <ProtectoraDetailPageClient shelterId={id} />
-}
-
-function ProtectoraDetailPageClient({ shelterId }: { shelterId: string }) {
+export default function ProtectoraDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [shelter, setShelter] = useState<Shelter | null>(null)
   const [animals, setAnimals] = useState<Animal[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Accessing params.id directly in client component
+  const shelterId = params.id
+
   useEffect(() => {
     async function loadShelterData() {
+      console.log("[v0] Loading shelter with ID:", shelterId)
       const supabase = createClient()
 
-      const { data: shelterData } = await supabase.from("shelters").select("*").eq("id", shelterId).single()
+      const { data: shelterData, error: shelterError } = await supabase
+        .from("shelters")
+        .select("*")
+        .eq("id", shelterId)
+        .single()
 
-      const { data: animalsData } = await supabase
+      console.log("[v0] Shelter query result:", { shelterData, shelterError })
+
+      const { data: animalsData, error: animalsError } = await supabase
         .from("animals")
         .select("*")
         .eq("shelter_id", shelterId)
         .eq("status", "available")
         .order("created_at", { ascending: false })
+
+      console.log("[v0] Animals query result:", { animalsData, animalsError })
 
       if (shelterData) {
         setShelter(shelterData)
@@ -123,7 +129,7 @@ function ProtectoraDetailPageClient({ shelterId }: { shelterId: string }) {
             className="w-28 h-28 rounded-full border-4 border-[#FFFBFE] shadow-lg object-cover"
           />
 
-          {/* Social Icons now horizontal */}
+          {/* Social Icons horizontal */}
           <div className="flex gap-2 mb-2">
             {shelter.website && (
               <a
