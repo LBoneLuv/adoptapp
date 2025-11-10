@@ -36,7 +36,13 @@ type Animal = {
   }
 }
 
-export default function PetDetailPage({ params }: { params: { id: string } }) {
+export default async function PetDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
+  return <PetDetailPageClient animalId={id} />
+}
+
+function PetDetailPageClient({ animalId }: { animalId: string }) {
   const router = useRouter()
   const [animal, setAnimal] = useState<Animal | null>(null)
   const [loading, setLoading] = useState(true)
@@ -47,7 +53,7 @@ export default function PetDetailPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     loadAnimal()
     checkFavorite()
-  }, [params.id])
+  }, [animalId])
 
   async function loadAnimal() {
     const supabase = createClient()
@@ -62,7 +68,7 @@ export default function PetDetailPage({ params }: { params: { id: string } }) {
           profile_image_url
         )
       `)
-      .eq("id", params.id)
+      .eq("id", animalId)
       .single()
 
     if (data) {
@@ -83,7 +89,7 @@ export default function PetDetailPage({ params }: { params: { id: string } }) {
       .from("favorites")
       .select("*")
       .eq("user_id", user.id)
-      .eq("animal_id", params.id)
+      .eq("animal_id", animalId)
       .single()
 
     setIsFavorite(!!data)
@@ -101,17 +107,13 @@ export default function PetDetailPage({ params }: { params: { id: string } }) {
     }
 
     if (isFavorite) {
-      // Remove from favorites
-      await supabase.from("favorites").delete().eq("user_id", user.id).eq("animal_id", params.id)
-
+      await supabase.from("favorites").delete().eq("user_id", user.id).eq("animal_id", animalId)
       setIsFavorite(false)
     } else {
-      // Add to favorites
       await supabase.from("favorites").insert({
         user_id: user.id,
-        animal_id: params.id,
+        animal_id: animalId,
       })
-
       setIsFavorite(true)
     }
   }
@@ -169,12 +171,12 @@ export default function PetDetailPage({ params }: { params: { id: string } }) {
     <div className="flex flex-col min-h-screen bg-[#FEF7FF]">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-4 bg-[#FFFBFE]/95 backdrop-blur-sm shadow-sm">
-        <Link
-          href="/adopta"
+        <button
+          onClick={() => router.back()}
           className="w-10 h-10 bg-[#E8DEF8] rounded-full flex items-center justify-center hover:bg-[#D0BCFF] transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-[#1C1B1F]" />
-        </Link>
+        </button>
         <h1 className="text-lg font-bold text-[#1C1B1F]">Detalles</h1>
         <div className="w-10" />
       </header>

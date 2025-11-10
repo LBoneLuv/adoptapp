@@ -1,11 +1,11 @@
 "use client"
 
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { ArrowLeft, MapPin, Globe, Facebook, Instagram } from "lucide-react"
+import { MapPin, Globe, Facebook, Instagram } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { PetCard } from "@/components/pet-card"
 
 type Shelter = {
   id: string
@@ -46,8 +46,13 @@ const SocialIcon = ({ platform }: { platform: string }) => {
   }
 }
 
-export default function ProtectoraDetailPage() {
-  const params = useParams()
+export default async function ProtectoraDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params
+
+  return <ProtectoraDetailPageClient shelterId={id} />
+}
+
+function ProtectoraDetailPageClient({ shelterId }: { shelterId: string }) {
   const router = useRouter()
   const [shelter, setShelter] = useState<Shelter | null>(null)
   const [animals, setAnimals] = useState<Animal[]>([])
@@ -56,17 +61,8 @@ export default function ProtectoraDetailPage() {
   useEffect(() => {
     async function loadShelterData() {
       const supabase = createClient()
-      const shelterId = params.id as string
 
       const { data: shelterData } = await supabase.from("shelters").select("*").eq("id", shelterId).single()
-
-      console.log("[v0] Shelter data completa:", JSON.stringify(shelterData, null, 2))
-      console.log("[v0] Website existe?:", !!shelterData?.website)
-      console.log("[v0] Website valor:", shelterData?.website)
-      console.log("[v0] Social links existe?:", !!shelterData?.social_links)
-      console.log("[v0] Social links valor:", JSON.stringify(shelterData?.social_links, null, 2))
-      console.log("[v0] Social links es array?:", Array.isArray(shelterData?.social_links))
-      console.log("[v0] Social links length:", shelterData?.social_links?.length)
 
       const { data: animalsData } = await supabase
         .from("animals")
@@ -85,7 +81,7 @@ export default function ProtectoraDetailPage() {
     }
 
     loadShelterData()
-  }, [params.id])
+  }, [shelterId])
 
   if (loading) {
     return (
@@ -107,15 +103,7 @@ export default function ProtectoraDetailPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FEF7FF]">
-      {/* Header with back button */}
-      <header className="px-4 py-4 bg-[#FFFBFE] shadow-sm flex items-center">
-        <button onClick={() => router.back()} className="w-10 h-10 flex items-center justify-center">
-          <ArrowLeft className="w-6 h-6 text-[#1C1B1F]" />
-        </button>
-        <h1 className="flex-1 text-center font-bold text-[#1C1B1F] text-base pr-10">Protectora</h1>
-      </header>
-
+    <div className="flex flex-col h-full bg-[#FEF7FF] overflow-y-auto">
       {/* Cover Image */}
       <div className="relative h-48">
         <img
@@ -135,41 +123,33 @@ export default function ProtectoraDetailPage() {
             className="w-28 h-28 rounded-full border-4 border-[#FFFBFE] shadow-lg object-cover"
           />
 
-          <div className="flex flex-col gap-2 mb-2">
+          {/* Social Icons now horizontal */}
+          <div className="flex gap-2 mb-2">
             {shelter.website && (
-              <>
-                {console.log("[v0] Renderizando icono de website")}
+              <a
+                href={shelter.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 bg-[#6750A4] rounded-full flex items-center justify-center text-white hover:bg-[#7965AF] transition-colors shadow-md"
+                title="Sitio Web"
+              >
+                <Globe className="w-4 h-4" />
+              </a>
+            )}
+            {Array.isArray(shelter.social_links) &&
+              shelter.social_links.length > 0 &&
+              shelter.social_links.map((link, index) => (
                 <a
-                  href={shelter.website}
+                  key={index}
+                  href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 bg-[#6750A4] rounded-full flex items-center justify-center text-white hover:bg-[#7965AF] transition-colors shadow-md"
-                  title="Sitio Web"
+                  title={link.platform}
                 >
-                  <Globe className="w-4 h-4" />
+                  <SocialIcon platform={link.platform} />
                 </a>
-              </>
-            )}
-            {Array.isArray(shelter.social_links) && shelter.social_links.length > 0 && (
-              <>
-                {console.log("[v0] Renderizando", shelter.social_links.length, "iconos de redes sociales")}
-                {shelter.social_links.map((link, index) => (
-                  <a
-                    key={index}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-8 h-8 bg-[#6750A4] rounded-full flex items-center justify-center text-white hover:bg-[#7965AF] transition-colors shadow-md"
-                    title={link.platform}
-                  >
-                    <SocialIcon platform={link.platform} />
-                  </a>
-                ))}
-              </>
-            )}
-            {!shelter.website &&
-              (!Array.isArray(shelter.social_links) || shelter.social_links.length === 0) &&
-              console.log("[v0] No hay iconos para mostrar")}
+              ))}
           </div>
         </div>
 
@@ -192,21 +172,7 @@ export default function ProtectoraDetailPage() {
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {animals.map((animal) => (
-              <Link key={animal.id} href={`/adopta/${animal.id}`}>
-                <div className="bg-[#FFFBFE] rounded-3xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-                  <img
-                    src={animal.image_url || animal.images?.[0] || "/placeholder.svg?height=200&width=200"}
-                    alt={animal.name}
-                    className="w-full h-40 object-cover"
-                  />
-                  <div className="p-3">
-                    <h4 className="font-semibold text-[#1C1B1F] text-sm">{animal.name}</h4>
-                    <p className="text-[#49454F] text-xs mt-1">
-                      {animal.breed} • {animal.age}
-                    </p>
-                  </div>
-                </div>
-              </Link>
+              <PetCard key={animal.id} pet={animal} />
             ))}
           </div>
         )}
