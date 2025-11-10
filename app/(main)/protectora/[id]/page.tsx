@@ -68,21 +68,24 @@ export default function ProtectoraDetailPage({ params }: { params: { id: string 
 
       console.log("[v0] Shelter query result:", { shelterData, shelterError })
 
-      const { data: animalsData, error: animalsError } = await supabase
-        .from("animals")
-        .select("*")
-        .eq("shelter_id", shelterId)
-        .eq("status", "available")
-        .order("created_at", { ascending: false })
-
-      console.log("[v0] Animals query result:", { animalsData, animalsError })
-
-      if (shelterData) {
+      if (!shelterError && shelterData) {
         setShelter(shelterData)
+
+        // Solo cargar animales si la protectora existe
+        const { data: animalsData, error: animalsError } = await supabase
+          .from("animals")
+          .select("*")
+          .eq("shelter_id", shelterId)
+          .eq("status", "available")
+          .order("created_at", { ascending: false })
+
+        console.log("[v0] Animals query result:", { animalsData, animalsError })
+
+        if (!animalsError && animalsData) {
+          setAnimals(animalsData)
+        }
       }
-      if (animalsData) {
-        setAnimals(animalsData)
-      }
+
       setLoading(false)
     }
 
