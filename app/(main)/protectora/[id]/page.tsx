@@ -46,9 +46,9 @@ const SocialIcon = ({ platform }: { platform: string }) => {
 export default async function ProtectoraDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }) {
-  const { id } = await params
+  const { id } = params
   const supabase = await createClient()
 
   const { data: shelter, error: shelterError } = await supabase.from("shelters").select("*").eq("id", id).single()
