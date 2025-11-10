@@ -121,7 +121,7 @@ export default function AdoptappHome() {
       {/* Pet Listing */}
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
                 <div className="w-full h-40 bg-gray-200" />
@@ -133,11 +133,11 @@ export default function AdoptappHome() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {filteredAnimals && filteredAnimals.length > 0 ? (
               filteredAnimals.map((animal: any) => <PetCard key={animal.id} pet={animal} />)
             ) : (
-              <div className="col-span-2 text-center py-8 text-[#49454F]">
+              <div className="col-span-1 text-center py-8 text-[#49454F]">
                 <p>No hay animales que coincidan con los filtros</p>
               </div>
             )}

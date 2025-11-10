@@ -11,10 +11,35 @@ interface Pet {
   breed: string
   location: string
   images: string[]
+  gender?: string
 }
 
 interface PetCardProps {
   pet: Pet
+}
+
+const GenderIcon = ({ gender }: { gender?: string }) => {
+  if (!gender) return null
+
+  if (gender === "macho") {
+    return (
+      <div className="absolute top-2 right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center shadow-md">
+        <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="10" cy="14" r="6" />
+          <path d="M14 8l6-6M20 2v6M20 2h-6" />
+        </svg>
+      </div>
+    )
+  }
+
+  return (
+    <div className="absolute top-2 right-2 w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center shadow-md">
+      <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="8" r="6" />
+        <path d="M12 14v8M9 19h6" />
+      </svg>
+    </div>
+  )
 }
 
 export const PetCard = memo(function PetCard({ pet }: PetCardProps) {
@@ -33,6 +58,8 @@ export const PetCard = memo(function PetCard({ pet }: PetCardProps) {
             loading="lazy"
             quality={75}
           />
+
+          <GenderIcon gender={pet.gender} />
 
           <div className="absolute bottom-2 left-2 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-md">
             <MapPin className="w-3.5 h-3.5 text-[#6750A4]" />

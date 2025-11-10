@@ -1,4 +1,4 @@
-import { ArrowLeft, MapPin, Calendar, Tag, Check, X, ChevronRight } from "lucide-react"
+import { ArrowLeft, MapPin, Calendar, Tag, Check, X, ChevronRight, Ruler } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import Image from "next/image"
@@ -32,6 +32,23 @@ export default async function PetDetailPage({ params }: { params: Promise<{ id: 
 
   const images = animal.images || []
   const firstImage = images.length > 0 ? images[0] : "/placeholder.svg?height=320&width=400"
+
+  const GenderIcon = ({ gender }: { gender: string }) => {
+    if (gender === "macho") {
+      return (
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="10" cy="14" r="6" />
+          <path d="M14 8l6-6M20 2v6M20 2h-6" />
+        </svg>
+      )
+    }
+    return (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="8" r="6" />
+        <path d="M12 14v8M9 19h6" />
+      </svg>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FEF7FF]">
@@ -82,12 +99,78 @@ export default async function PetDetailPage({ params }: { params: Promise<{ id: 
                 <span className="text-sm">{animal.breed}</span>
               </div>
             )}
+            {animal.gender && (
+              <div className="flex items-center gap-2">
+                <div className={`${animal.gender === "macho" ? "text-blue-500" : "text-pink-500"}`}>
+                  <GenderIcon gender={animal.gender} />
+                </div>
+                <span className="text-sm">{animal.gender === "macho" ? "Macho" : "Hembra"}</span>
+              </div>
+            )}
+            {animal.size && (
+              <div className="flex items-center gap-2">
+                <Ruler className="text-[#6750A4] size-4" />
+                <span className="text-sm capitalize">{animal.size}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <MapPin className="text-[#6750A4] size-4" />
               <span className="text-sm">{animal.location}</span>
             </div>
           </div>
         </div>
+
+        {(animal.active_level !== null || animal.affectionate_level !== null || animal.sociable_level !== null) && (
+          <div className="px-4 py-6 bg-[#FFFBFE] shadow-sm mt-2">
+            <h3 className="font-bold text-[#1C1B1F] mb-4 text-base">Personalidad</h3>
+            <div className="space-y-4">
+              {animal.active_level !== null && (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-[#49454F]">Activo</span>
+                    <span className="text-xs text-[#6750A4] font-semibold">{animal.active_level}/10</span>
+                  </div>
+                  <div className="w-full h-2 bg-[#E7E0EC] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#6750A4] to-[#7965AF] rounded-full transition-all"
+                      style={{ width: `${(animal.active_level / 10) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {animal.affectionate_level !== null && (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-[#49454F]">Cariñoso</span>
+                    <span className="text-xs text-[#6750A4] font-semibold">{animal.affectionate_level}/10</span>
+                  </div>
+                  <div className="w-full h-2 bg-[#E7E0EC] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#6750A4] to-[#7965AF] rounded-full transition-all"
+                      style={{ width: `${(animal.affectionate_level / 10) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {animal.sociable_level !== null && (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-[#49454F]">Sociable</span>
+                    <span className="text-xs text-[#6750A4] font-semibold">{animal.sociable_level}/10</span>
+                  </div>
+                  <div className="w-full h-2 bg-[#E7E0EC] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#6750A4] to-[#7965AF] rounded-full transition-all"
+                      style={{ width: `${(animal.sociable_level / 10) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Health Details */}
         <div className="px-4 py-6 bg-[#FFFBFE] shadow-sm mt-2">

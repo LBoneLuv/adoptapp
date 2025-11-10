@@ -31,6 +31,9 @@ export default function NuevoAnimalPage() {
     vaccinated: false,
     microchipped: false,
     sterilized: false,
+    active_level: 5,
+    affectionate_level: 5,
+    sociable_level: 5,
   })
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -275,6 +278,75 @@ export default function NuevoAnimalPage() {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-4 py-3 bg-[#FFFBFE] border-2 border-[#79747E] rounded-2xl focus:border-[#6750A4] focus:outline-none text-[#1C1B1F] resize-none text-sm"
             />
+          </div>
+        </div>
+
+        {/* Personality Section */}
+        <div className="mb-6">
+          <h2 className="text-base font-semibold text-[#1C1B1F] mb-4">Personalidad</h2>
+          <div className="bg-[#FFFBFE] rounded-3xl shadow-md p-4 space-y-6">
+            {/* Activo Slider */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-[#1C1B1F]">Activo</span>
+                <span className="text-xs text-[#6750A4] font-semibold">{formData.active_level}/10</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="1"
+                value={formData.active_level}
+                onChange={(e) => setFormData({ ...formData, active_level: Number.parseInt(e.target.value) })}
+                className="w-full h-2 bg-[#E7E0EC] rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#6750A4] [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#6750A4] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-[#79747E] mt-1">
+                <span>Tranquilo</span>
+                <span>Muy activo</span>
+              </div>
+            </div>
+
+            {/* Cariñoso Slider */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-[#1C1B1F]">Cariñoso</span>
+                <span className="text-xs text-[#6750A4] font-semibold">{formData.affectionate_level}/10</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="1"
+                value={formData.affectionate_level}
+                onChange={(e) => setFormData({ ...formData, affectionate_level: Number.parseInt(e.target.value) })}
+                className="w-full h-2 bg-[#E7E0EC] rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#6750A4] [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#6750A4] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-[#79747E] mt-1">
+                <span>Independiente</span>
+                <span>Muy cariñoso</span>
+              </div>
+            </div>
+
+            {/* Sociable Slider */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-[#1C1B1F]">Sociable</span>
+                <span className="text-xs text-[#6750A4] font-semibold">{formData.sociable_level}/10</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="1"
+                value={formData.sociable_level}
+                onChange={(e) => setFormData({ ...formData, sociable_level: Number.parseInt(e.target.value) })}
+                className="w-full h-2 bg-[#E7E0EC] rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#6750A4] [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#6750A4] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-[#79747E] mt-1">
+                <span>Tímido</span>
+                <span>Muy sociable</span>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -270,39 +270,37 @@ export default function ComunidadPage() {
 
     try {
       if (currentVote === voteType) {
-        // Remove vote
+        // Remove vote - trigger will update counter automatically
         await supabase.from("votes").delete().eq("post_id", postId).eq("user_id", currentUser.id)
 
-        await supabase
-          .from("posts")
-          .update({ votes: post.votes - voteType })
-          .eq("id", postId)
-
+        // Update local state
         setPosts(posts.map((p) => (p.id === postId ? { ...p, votes: p.votes - voteType, user_vote: undefined } : p)))
       } else {
         // Add or change vote
         if (currentVote !== undefined) {
-          // Remove old vote first
+          // Remove old vote first - trigger will handle counter
           await supabase.from("votes").delete().eq("post_id", postId).eq("user_id", currentUser.id)
         }
 
+        // Insert new vote - trigger will handle counter
         await supabase.from("votes").insert({
           post_id: postId,
           user_id: currentUser.id,
           vote_type: voteType,
         })
 
+        // Update local state
         const voteDelta = currentVote !== undefined ? voteType - currentVote : voteType
-        await supabase
-          .from("posts")
-          .update({ votes: post.votes + voteDelta })
-          .eq("id", postId)
-
         setPosts(posts.map((p) => (p.id === postId ? { ...p, votes: p.votes + voteDelta, user_vote: voteType } : p)))
       }
+
+      // Reload posts to ensure data is consistent
+      setTimeout(() => loadPosts(), 500)
     } catch (error) {
       console.error("[v0] Error voting:", error)
       showToast("Error al votar", "error")
+      // Reload posts on error to sync state
+      loadPosts()
     }
   }
 
