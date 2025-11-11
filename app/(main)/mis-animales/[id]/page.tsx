@@ -19,25 +19,43 @@ function calculateAge(birthDate: string): string {
   return `${years} ${years === 1 ? "año" : "años"}`
 }
 
-export default function DetalleMascotaPage({ params }: { params: { id: string } }) {
+export default function DetalleMascotaPage({ params }: { params: { id: string } | Promise<{ id: string }> }) {
   const [pet, setPet] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [petId, setPetId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (params?.id) {
-      loadPetDetails(params.id)
-    }
-  }, [params?.id])
+    console.log("[v0] DetalleMascotaPage mounted")
+    console.log("[v0] params:", params)
 
-  const loadPetDetails = async (petId: string) => {
+    Promise.resolve(params).then((resolvedParams) => {
+      console.log("[v0] resolvedParams:", resolvedParams)
+      if (resolvedParams?.id) {
+        setPetId(resolvedParams.id)
+      }
+    })
+  }, [params])
+
+  useEffect(() => {
+    console.log("[v0] petId changed:", petId)
+    if (petId) {
+      loadPetDetails(petId)
+    }
+  }, [petId])
+
+  const loadPetDetails = async (id: string) => {
     try {
+      console.log("[v0] Loading pet details for:", id)
       const supabase = createClient()
-      const { data, error } = await supabase.from("user_pets").select("*").eq("id", petId).single()
+      const { data, error } = await supabase.from("user_pets").select("*").eq("id", id).single()
+
+      console.log("[v0] Pet data:", data)
+      console.log("[v0] Pet error:", error)
 
       if (error) throw error
       setPet(data)
     } catch (error) {
-      console.error("Error loading pet:", error)
+      console.error("[v0] Error loading pet:", error)
     } finally {
       setLoading(false)
     }
