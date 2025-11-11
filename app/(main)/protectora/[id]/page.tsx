@@ -50,9 +50,14 @@ export default async function ProtectoraDetailPage({
   const { id } = params
   const supabase = await createClient()
 
+  console.log("[v0] Fetching shelter with ID:", id)
+
   const { data: shelter, error: shelterError } = await supabase.from("shelters").select("*").eq("id", id).single()
 
+  console.log("[v0] Shelter query result:", { shelter, error: shelterError })
+
   if (shelterError || !shelter) {
+    console.log("[v0] Shelter not found, returning 404")
     notFound()
   }
 
@@ -62,6 +67,8 @@ export default async function ProtectoraDetailPage({
     .eq("shelter_id", id)
     .eq("status", "available")
     .order("created_at", { ascending: false })
+
+  console.log("[v0] Animals count:", animals?.length || 0)
 
   return <ProtectoraDetailClient shelter={shelter} animals={animals || []} />
 }
