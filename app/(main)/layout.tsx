@@ -14,7 +14,7 @@ export default function MainLayout({
     <div className="flex flex-col h-screen bg-[#FEF7FF]">
       <NotificationHandler />
       <AppHeader />
-      <div className="flex-1 overflow-hidden">{children}</div>
+      <div className="flex-1 overflow-y-auto">{children}</div>
       <BottomNavigation />
     </div>
   )

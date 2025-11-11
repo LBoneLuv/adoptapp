@@ -65,7 +65,7 @@ export default function RegistroPage() {
     <div className="flex flex-col min-h-screen bg-[#FEF7FF]">
       {/* Header */}
       <header className="flex items-center px-4 py-4 bg-[#FFFBFE] shadow-sm">
-        <Link href="/bienvenida" className="w-10 h-10 flex items-center justify-center">
+        <Link href="/" className="w-10 h-10 flex items-center justify-center">
           <ArrowLeft className="w-6 h-6 text-[#1C1B1F]" />
         </Link>
         <h1 className="flex-1 font-semibold text-[#1C1B1F] pr-10 text-base text-center">Crear Cuenta de Usuario</h1>
