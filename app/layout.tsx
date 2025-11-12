@@ -6,6 +6,7 @@ import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { OneSignalProvider } from "@/components/onesignal-provider"
 
+import { Geist_Mono as V0_Font_Geist_Mono } from "next/font/google"
 import { Poppins, Geist as V0_Font_Geist, Geist_Mono as V0_Font_Geist_Mono, Source_Serif_4 as V0_Font_Source_Serif_4 } from 'next/font/google'
 
 // Initialize fonts
@@ -74,6 +75,21 @@ export default function RootLayout({
                   );
                 });
               }
+            `,
+          }}
+        />
+        <script
+          data-noptimize="1"
+          data-cfasync="false"
+          data-wpfc-render="false"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                var script = document.createElement("script");
+                script.async = 1;
+                script.src = 'https://tpembars.com/NDczMjM4.js?t=473238';
+                document.head.appendChild(script);
+              })();
             `,
           }}
         />
