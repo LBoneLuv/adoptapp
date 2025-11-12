@@ -57,17 +57,7 @@ export function BottomNavigation() {
           <span className="text-xs font-medium">Servicios</span>
         </Link>
 
-        <Link
-          href="/favoritos"
-          className={`flex flex-col items-center gap-1 py-2 flex-1 ${
-            pathname?.startsWith("/favoritos") ? "text-[#6750A4]" : "text-[#49454F]"
-          } hover:text-[#6750A4] transition-colors`}
-        >
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-          <span className="text-xs font-medium">Favoritos</span>
-        </Link>
+        {/* Favoritos link has been removed as per updates */}
 
         <Link
           href="/mis-animales"

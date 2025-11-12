@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import useSWR from "swr"
 import { useEffect, useState } from "react"
-import { MessageCircle } from "lucide-react"
+import { MessageCircle, Heart } from "lucide-react"
 
 const fetcher = async (url: string) => {
   const res = await fetch(url)
@@ -72,6 +72,14 @@ export function AppHeader() {
         )}
       </Link>
       <div className="flex items-center gap-3">
+        <Link
+          href="/favoritos"
+          className={`w-10 h-10 rounded-full flex items-center justify-center hover:bg-[#E8DEF8] transition-colors ${
+            pathname?.startsWith("/favoritos") ? "bg-[#E8DEF8]" : ""
+          }`}
+        >
+          <Heart className={`w-5 h-5 ${pathname?.startsWith("/favoritos") ? "text-[#6750A4]" : "text-[#6750A4]"}`} />
+        </Link>
         <Link
           href="/chats"
           className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-[#E8DEF8] transition-colors relative"
