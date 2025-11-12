@@ -113,7 +113,7 @@ export default function DetalleMascotaPage({ params }: { params: { id: string } 
               <FileText className="w-6 h-6 text-[#6750A4]" />
             </div>
             <h4 className="text-sm font-bold text-[#1C1B1F] mb-1">Cartilla</h4>
-            <p className="text-xs text-[#79747E]">Pasaporte veterinario de tu animal </p>
+            <p className="text-xs text-[#79747E]">Pasaporte veterinario  </p>
           </div>
         </Link>
 
