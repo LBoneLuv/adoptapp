@@ -17,7 +17,7 @@ export function AppHeader() {
   const { data: user } = useSWR("/api/user", fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
-    dedupingInterval: 60000, // 1 minute
+    dedupingInterval: 60000,
   })
   const [mounted, setMounted] = useState(false)
   const [totalUnread, setTotalUnread] = useState(0)
@@ -29,7 +29,7 @@ export function AppHeader() {
   useEffect(() => {
     if (mounted && user) {
       loadUnreadCount()
-      const interval = setInterval(loadUnreadCount, 10000) // Check every 10 seconds
+      const interval = setInterval(loadUnreadCount, 10000)
       return () => clearInterval(interval)
     }
   }, [mounted, user])
@@ -55,6 +55,7 @@ export function AppHeader() {
     if (pathname?.startsWith("/protectoras")) return "Protectoras"
     if (pathname?.startsWith("/avisos")) return "Avisos"
     if (pathname?.startsWith("/comunidad")) return "Comunidad"
+    if (pathname?.startsWith("/tienda")) return "Tienda"
     return "Arko"
   }
 
