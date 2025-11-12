@@ -62,7 +62,7 @@ export function AppHeader() {
     <header className="flex items-center justify-between px-4 py-4 bg-[#FFFBFE] shadow-sm flex-shrink-0">
       <Link href="/principal" className="flex items-center gap-2">
         {pathname?.startsWith("/principal") ? (
-          <img src="/arko-header-logo.svg" alt="Arko" className="h-10 w-auto" />
+          <img src="/arko-header-logo.svg" alt="Arko" className="w-auto h-10" />
         ) : (
           <>
             <img src="/arko-logo.svg" alt="Arko" className="w-10 h-10" />
