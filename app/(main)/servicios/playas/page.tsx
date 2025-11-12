@@ -257,14 +257,20 @@ export default function PlayasPage() {
 
                 {selectedBeach.description && (
                   <div className="bg-primary/10 rounded-2xl p-4">
-                    <p className="text-sm text-foreground leading-relaxed">{selectedBeach.description}</p>
+                    <div
+                      className="text-sm text-foreground leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: selectedBeach.description }}
+                    />
                   </div>
                 )}
 
                 {selectedBeach.how_to_get && (
                   <div>
                     <h4 className="font-semibold mb-2 text-base">Cómo llegar</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{selectedBeach.how_to_get}</p>
+                    <div
+                      className="text-sm text-muted-foreground leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: selectedBeach.how_to_get }}
+                    />
                   </div>
                 )}
 
@@ -334,16 +340,20 @@ export default function PlayasPage() {
                 {selectedBeach.rules && (
                   <div>
                     <h4 className="font-semibold mb-2 text-base">Normas de la playa</h4>
-                    <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                      {selectedBeach.rules}
-                    </div>
+                    <div
+                      className="text-sm text-muted-foreground leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: selectedBeach.rules }}
+                    />
                   </div>
                 )}
 
                 {selectedBeach.services && (
                   <div>
                     <h4 className="font-semibold mb-2 text-base">Servicios</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{selectedBeach.services}</p>
+                    <div
+                      className="text-sm text-muted-foreground leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: selectedBeach.services }}
+                    />
                   </div>
                 )}
 
