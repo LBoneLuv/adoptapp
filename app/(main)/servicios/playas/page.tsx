@@ -354,7 +354,7 @@ export default function PlayasPage() {
                     variant="default"
                   >
                     <Home className="w-4 h-4 mr-2" />
-                    Alojamientos cercanos que admiten perros
+                    Alojamientos pet friendly
                   </Button>
                 )}
               </div>
