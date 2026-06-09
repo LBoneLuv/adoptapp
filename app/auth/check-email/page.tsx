@@ -26,7 +26,7 @@ export default function CheckEmailPage() {
           Te hemos enviado un enlace de confirmación a tu correo electrónico. Por favor, revisa tu bandeja de entrada y
           haz clic en el enlace para activar tu cuenta.
         </p>
-        <Link href="/bienvenida">
+        <Link href="/">
           <Button className="w-full bg-[#6750A4] hover:bg-[#7965AF] text-white rounded-full h-12 font-semibold">
             Volver al inicio
           </Button>
