@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { normalizeBeachImage, normalizeBeachPhotos } from "@/lib/beach-image"
 
 async function scrapeBeachDetails(url: string) {
   try {
@@ -93,7 +94,7 @@ async function scrapeBeachDetails(url: string) {
       howToGet,
       rules,
       services,
-      photosUrls: photosUrls.slice(0, 10),
+      photosUrls: normalizeBeachPhotos(photosUrls.slice(0, 10)),
     }
   } catch (error) {
     console.error("Error scraping beach details:", error)
@@ -101,8 +102,9 @@ async function scrapeBeachDetails(url: string) {
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: beachId } = await params
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -116,8 +118,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         },
       },
     )
-
-    const beachId = params.id
 
     const { data: beach, error: fetchError } = await supabase
       .from("dog_beaches")

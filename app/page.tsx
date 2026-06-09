@@ -5,6 +5,15 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
+import { Heart, Stethoscope, Waves, ShoppingBag, Users } from "lucide-react"
+
+const FEATURES = [
+  { icon: Heart, label: "Adopción" },
+  { icon: Stethoscope, label: "Servicios" },
+  { icon: Waves, label: "Playas" },
+  { icon: ShoppingBag, label: "Tienda" },
+  { icon: Users, label: "Comunidad" },
+]
 
 export default function WelcomePage() {
   const router = useRouter()
@@ -18,9 +27,7 @@ export default function WelcomePage() {
       } = await supabase.auth.getSession()
 
       if (session?.user) {
-        // Check if user is a shelter
         const { data: shelterData } = await supabase.from("shelters").select("id").eq("id", session.user.id).single()
-
         if (shelterData) {
           router.push("/admin/animales")
         } else {
@@ -30,7 +37,6 @@ export default function WelcomePage() {
         setIsChecking(false)
       }
     }
-
     checkSession()
   }, [router])
 
@@ -43,7 +49,7 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="relative flex flex-col items-center justify-between min-h-screen bg-[#FEF7FF] px-6 py-12">
+    <div className="relative flex flex-col items-center justify-between min-h-screen bg-[#FEF7FF] px-6 py-10">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
@@ -57,33 +63,53 @@ export default function WelcomePage() {
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-between flex-1 w-full max-w-md">
         {/* Logo and Slogan */}
-        <div className="flex flex-col items-center gap-4 mt-16">
-          <img src="/arko-full-logo.svg" alt="Arko" className="h-32 w-auto" />
-          <p className="text-[#49454F] text-center font-medium text-base">Encuentra a tu nuevo mejor amigo</p>
+        <div className="flex flex-col items-center gap-3 mt-10">
+          <img src="/arko-full-logo.svg" alt="Arko" className="h-28 w-auto" />
+          <p className="text-[#1C1B1F] text-center font-semibold text-xl leading-tight text-balance">
+            Todo para tu mascota, en un solo lugar
+          </p>
+          <p className="text-[#49454F] text-center text-sm leading-relaxed">
+            Adopta, encuentra veterinarios, paseadores y residencias, descubre playas pet-friendly y compra todo lo que
+            necesita.
+          </p>
+        </div>
+
+        {/* Feature showcase */}
+        <div className="grid grid-cols-5 gap-2 w-full my-6">
+          {FEATURES.map(({ icon: Icon, label }) => (
+            <div key={label} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 rounded-2xl bg-[#E8DEF8] flex items-center justify-center shadow-sm">
+                <Icon className="w-5 h-5 text-[#6750A4]" />
+              </div>
+              <span className="text-[10px] text-[#49454F] font-medium text-center leading-tight">{label}</span>
+            </div>
+          ))}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col gap-4 w-full mb-8">
+        <div className="flex flex-col gap-3 w-full mt-2">
           <Link href="/registro" className="w-full">
-            <Button className="w-full bg-[#6750A4] hover:bg-[#7965AF] text-white rounded-full font-semibold shadow-lg text-base h-11">
-              Quiero Adoptar
+            <Button className="w-full bg-[#6750A4] hover:bg-[#7965AF] text-white rounded-full font-semibold shadow-lg text-base h-12">
+              Crear cuenta gratis
             </Button>
           </Link>
           <Link href="/registro-protectora" className="w-full">
             <Button
               variant="outline"
-              className="w-full border-2 border-[#6750A4] text-[#6750A4] hover:bg-[#E8DEF8] rounded-full font-semibold bg-transparent text-base h-11"
+              className="w-full border-2 border-[#6750A4] text-[#6750A4] hover:bg-[#E8DEF8] rounded-full font-semibold bg-transparent text-base h-12"
             >
-              Soy una Protectora
+              Soy una protectora
             </Button>
           </Link>
-        </div>
 
-        <div className="mb-8">
-          <p className="text-[#49454F] text-center text-sm">
+          <p className="text-[#49454F] text-center text-xs mt-1 leading-relaxed">
+            Adopta, gestiona a tus mascotas y accede a todos los servicios.
+          </p>
+
+          <p className="text-[#49454F] text-center text-sm mt-2">
             ¿Ya tienes cuenta?{" "}
             <Link href="/login" className="text-[#6750A4] font-semibold hover:underline">
-              Inicia Sesión
+              Inicia sesión
             </Link>
           </p>
         </div>

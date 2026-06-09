@@ -1,15 +1,16 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { ArrowLeft, Copy, FileText, Check, Edit, Cpu } from "lucide-react"
+import { ArrowLeft, Copy, FileText, Check, Pencil, Cpu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { DocUpload } from "@/components/doc-upload"
+
+const inputCls =
+  "w-full px-4 py-3 bg-[#FEF7FF] border-2 border-[#79747E] rounded-2xl focus:border-[#6750A4] focus:outline-none text-[#1C1B1F] text-sm"
+const labelCls = "block text-sm font-medium text-[#49454F] mb-2"
 
 export default function MicrochipPage() {
   const router = useRouter()
@@ -19,7 +20,6 @@ export default function MicrochipPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [hasData, setHasData] = useState(false)
 
@@ -44,9 +44,7 @@ export default function MicrochipPage() {
         .select("*")
         .eq("pet_id", petId)
         .maybeSingle()
-
       if (error) throw error
-
       if (microchip) {
         setFormData({
           chip_number: microchip.chip_number || "",
@@ -64,11 +62,6 @@ export default function MicrochipPage() {
       }
     } catch (error) {
       console.error("Error loading microchip:", error)
-      toast({
-        title: "Error",
-        description: "No se pudo cargar la información del microchip",
-        variant: "destructive",
-      })
     } finally {
       setLoading(false)
     }
@@ -76,56 +69,12 @@ export default function MicrochipPage() {
 
   const handleCopyChipNumber = async () => {
     if (!formData.chip_number) return
-
     try {
       await navigator.clipboard.writeText(formData.chip_number)
       setCopied(true)
-      toast({
-        title: "Copiado",
-        description: "Número de microchip copiado al portapapeles",
-      })
       setTimeout(() => setCopied(false), 2000)
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo copiar el número",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append("file", file)
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      })
-
-      if (!response.ok) throw new Error("Upload failed")
-
-      const { url } = await response.json()
-      setFormData((prev) => ({ ...prev, document_url: url }))
-
-      toast({
-        title: "Documento subido",
-        description: "El documento se ha subido correctamente",
-      })
-    } catch (error) {
-      console.error("Error uploading:", error)
-      toast({
-        title: "Error",
-        description: "No se pudo subir el documento",
-        variant: "destructive",
-      })
-    } finally {
-      setUploading(false)
+    } catch {
+      toast({ title: "Error", description: "No se pudo copiar", variant: "destructive" })
     }
   }
 
@@ -133,37 +82,20 @@ export default function MicrochipPage() {
     setSaving(true)
     try {
       const supabase = createBrowserClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) throw new Error("No user")
-
       const { data: existing } = await supabase.from("pet_microchips").select("id").eq("pet_id", petId).maybeSingle()
-
       if (existing) {
         const { error } = await supabase.from("pet_microchips").update(formData).eq("pet_id", petId)
-
         if (error) throw error
       } else {
         const { error } = await supabase.from("pet_microchips").insert({ ...formData, pet_id: petId })
-
         if (error) throw error
       }
-
-      toast({
-        title: "Guardado",
-        description: "Información del microchip guardada correctamente",
-      })
-
+      toast({ title: "Guardado", description: "Información del microchip guardada" })
       setIsEditing(false)
       loadMicrochipData()
     } catch (error) {
       console.error("Error saving:", error)
-      toast({
-        title: "Error",
-        description: "No se pudo guardar la información",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: "No se pudo guardar", variant: "destructive" })
     } finally {
       setSaving(false)
     }
@@ -171,169 +103,148 @@ export default function MicrochipPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">Cargando...</div>
+      <div className="flex items-center justify-center min-h-screen bg-[#FEF7FF]">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#6750A4]" />
       </div>
     )
   }
 
+  const Row = ({ label, value }: { label: string; value: string }) =>
+    value ? (
+      <div className="py-2 border-b border-[#E8DEF8] last:border-0">
+        <p className="text-xs text-[#79747E]">{label}</p>
+        <p className="text-sm text-[#1C1B1F] font-medium mt-0.5">{value}</p>
+      </div>
+    ) : null
+
   return (
-    <div className="bg-background p-4 pb-24">
+    <div className="min-h-screen bg-[#FEF7FF] p-4 pb-24">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="w-10 h-10 bg-[#E8DEF8] rounded-full flex items-center justify-center ml-[-10px]">
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.back()} className="w-10 h-10 bg-[#E8DEF8] rounded-full flex items-center justify-center">
+            <ArrowLeft className="h-5 w-5 text-[#6750A4]" />
+          </button>
+          <div className="flex items-center gap-2">
             <Cpu className="w-5 h-5 text-[#6750A4]" />
+            <h1 className="font-bold text-lg text-[#1C1B1F]">Microchip</h1>
           </div>
-          <h1 className="font-bold text-lg">Microchip</h1>
         </div>
         {hasData && !isEditing && (
-          <Button variant="outline" onClick={() => setIsEditing(true)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Editar
+          <Button
+            variant="outline"
+            onClick={() => setIsEditing(true)}
+            className="border-[#6750A4] text-[#6750A4] rounded-full h-10 bg-transparent"
+          >
+            <Pencil className="h-4 w-4 mr-1" /> Editar
           </Button>
         )}
       </div>
 
       {!isEditing && hasData ? (
         <div className="space-y-4">
-          <div className="p-4 border rounded-lg space-y-3">
-            <div>
-              <Label className="text-muted-foreground">Número de Microchip</Label>
-              <div className="flex items-center justify-between mt-1">
-                <p className="font-medium">{formData.chip_number}</p>
-                <Button variant="ghost" size="icon" onClick={handleCopyChipNumber}>
-                  {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
+          {/* Chip number highlight */}
+          <div className="bg-[#6750A4] rounded-3xl p-5 text-white shadow-md">
+            <p className="text-xs text-white/80 mb-1">Número de microchip</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xl font-bold tracking-wide break-all">{formData.chip_number}</p>
+              <button onClick={handleCopyChipNumber} className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+              </button>
             </div>
-
-            {formData.implant_date && (
-              <div>
-                <Label className="text-muted-foreground">Fecha de Implantación</Label>
-                <p className="mt-1">{new Date(formData.implant_date).toLocaleDateString()}</p>
-              </div>
-            )}
-
-            {formData.chip_location && (
-              <div>
-                <Label className="text-muted-foreground">Localización del Chip</Label>
-                <p className="mt-1">{formData.chip_location}</p>
-              </div>
-            )}
-
-            {formData.registry_name && (
-              <div>
-                <Label className="text-muted-foreground">Registro</Label>
-                <p className="mt-1">{formData.registry_name}</p>
-              </div>
-            )}
-
-            {formData.veterinary_clinic && (
-              <div>
-                <Label className="text-muted-foreground">Clínica Veterinaria</Label>
-                <p className="mt-1">{formData.veterinary_clinic}</p>
-              </div>
-            )}
-
-            {formData.document_url && (
-              <div>
-                <Label className="text-muted-foreground">Documento</Label>
-                <Button
-                  variant="outline"
-                  className="w-full mt-2 bg-transparent"
-                  onClick={() => window.open(formData.document_url, "_blank")}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Ver Documento
-                </Button>
-              </div>
-            )}
           </div>
+
+          <div className="bg-[#FFFBFE] rounded-3xl shadow-md p-4">
+            <Row label="Fecha de implantación" value={formData.implant_date ? new Date(formData.implant_date).toLocaleDateString() : ""} />
+            <Row label="Localización del chip" value={formData.chip_location} />
+            <Row label="Registro" value={formData.registry_name} />
+            <Row label="Clínica veterinaria" value={formData.veterinary_clinic} />
+          </div>
+
+          {formData.document_url && (
+            <Button
+              variant="outline"
+              className="w-full border-[#6750A4] text-[#6750A4] rounded-full h-11 bg-transparent"
+              onClick={() => window.open(formData.document_url, "_blank")}
+            >
+              <FileText className="h-4 w-4 mr-2" /> Ver documento
+            </Button>
+          )}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="bg-[#FFFBFE] rounded-3xl shadow-md p-4 space-y-4">
           <div>
-            <Label htmlFor="chip_number">Número de Microchip</Label>
-            <Input
-              id="chip_number"
+            <label className={labelCls}>Número de microchip *</label>
+            <input
               value={formData.chip_number}
               onChange={(e) => setFormData({ ...formData, chip_number: e.target.value })}
               placeholder="Ej: 981000000123456"
+              className={inputCls}
             />
           </div>
-
           <div>
-            <Label htmlFor="implant_date">Fecha de Implantación</Label>
-            <Input
-              id="implant_date"
+            <label className={labelCls}>Fecha de implantación</label>
+            <input
               type="date"
               value={formData.implant_date}
               onChange={(e) => setFormData({ ...formData, implant_date: e.target.value })}
+              className={inputCls}
             />
           </div>
-
           <div>
-            <Label htmlFor="chip_location">Localización del Chip</Label>
-            <Input
-              id="chip_location"
+            <label className={labelCls}>Localización del chip</label>
+            <input
               value={formData.chip_location}
               onChange={(e) => setFormData({ ...formData, chip_location: e.target.value })}
               placeholder="Ej: Lado izquierdo del cuello"
+              className={inputCls}
             />
           </div>
-
           <div>
-            <Label htmlFor="registry_name">Registro</Label>
-            <Input
-              id="registry_name"
+            <label className={labelCls}>Registro</label>
+            <input
               value={formData.registry_name}
               onChange={(e) => setFormData({ ...formData, registry_name: e.target.value })}
               placeholder="Ej: REIAC, ANICOM"
+              className={inputCls}
             />
           </div>
-
           <div>
-            <Label htmlFor="veterinary_clinic">Clínica Veterinaria</Label>
-            <Input
-              id="veterinary_clinic"
+            <label className={labelCls}>Clínica veterinaria</label>
+            <input
               value={formData.veterinary_clinic}
               onChange={(e) => setFormData({ ...formData, veterinary_clinic: e.target.value })}
               placeholder="Nombre de la clínica"
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Documento del chip</label>
+            <DocUpload
+              value={formData.document_url}
+              onChange={(url) => setFormData({ ...formData, document_url: url as string })}
+              label="Subir documento"
+              hint="Imagen o PDF"
             />
           </div>
 
-          <div>
-            <Label htmlFor="document">Documento del Chip</Label>
-            <div className="space-y-2">
-              <Input
-                id="document"
-                type="file"
-                accept="image/*,.pdf"
-                onChange={handleDocumentUpload}
-                disabled={uploading}
-              />
-              {formData.document_url && (
-                <Button
-                  variant="outline"
-                  className="w-full bg-transparent"
-                  onClick={() => window.open(formData.document_url, "_blank")}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Ver Documento
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <Button className="flex-1" onClick={handleSave} disabled={saving || !formData.chip_number}>
-              {saving ? "Guardando..." : "Guardar Información"}
+          <div className="flex gap-2 pt-1">
+            <Button
+              className="flex-1 bg-[#6750A4] hover:bg-[#7965AF] text-white rounded-full h-11 font-semibold disabled:opacity-50"
+              onClick={handleSave}
+              disabled={saving || !formData.chip_number}
+            >
+              {saving ? "Guardando..." : "Guardar"}
             </Button>
             {hasData && (
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false)
+                  loadMicrochipData()
+                }}
+                className="border-[#79747E] text-[#49454F] rounded-full h-11 bg-transparent"
+              >
                 Cancelar
               </Button>
             )}

@@ -197,12 +197,15 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Register Link */}
+          {/* Register Link (depende de la pestaña activa) */}
           <div className="mt-8 text-center">
             <p className="text-[#49454F]">
-              ¿No tienes cuenta?{" "}
-              <Link href="/registro" className="text-[#6750A4] font-semibold hover:underline">
-                Regístrate
+              {activeTab === "protectora" ? "¿Aún no estás registrada?" : "¿No tienes cuenta?"}{" "}
+              <Link
+                href={activeTab === "protectora" ? "/registro-protectora" : "/registro"}
+                className="text-[#6750A4] font-semibold hover:underline"
+              >
+                {activeTab === "protectora" ? "Registra tu protectora" : "Regístrate"}
               </Link>
             </p>
           </div>

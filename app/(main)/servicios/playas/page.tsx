@@ -8,6 +8,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import dynamic from "next/dynamic"
+import { normalizeBeachImage, normalizeBeachPhotos } from "@/lib/beach-image"
 
 const BeachesMap = dynamic(() => import("@/components/beaches-map"), {
   ssr: false,
@@ -80,7 +81,8 @@ export default function PlayasPage() {
 
       const processedData = (data || []).map((beach) => ({
         ...beach,
-        image_url: beach.image_url ? beach.image_url.replace("-150x150", "") : null,
+        image_url: normalizeBeachImage(beach.image_url),
+        photos_urls: normalizeBeachPhotos(beach.photos_urls),
       }))
 
       setBeaches(processedData)
@@ -118,7 +120,8 @@ export default function PlayasPage() {
           if (!error && updatedBeach) {
             const processedBeach = {
               ...updatedBeach,
-              image_url: updatedBeach.image_url ? updatedBeach.image_url.replace("-150x150", "") : null,
+              image_url: normalizeBeachImage(updatedBeach.image_url),
+              photos_urls: normalizeBeachPhotos(updatedBeach.photos_urls),
             }
             setSelectedBeach(processedBeach)
             setBeaches((prev) => prev.map((b) => (b.id === beach.id ? processedBeach : b)))
@@ -188,6 +191,10 @@ export default function PlayasPage() {
                     src={beach.image_url || "/placeholder.svg"}
                     alt={beach.name}
                     className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null
+                      e.currentTarget.src = "/placeholder.svg"
+                    }}
                   />
                 )}
                 <div className="flex-1 min-w-0">
@@ -224,6 +231,10 @@ export default function PlayasPage() {
                   src={selectedBeach.image_url || "/placeholder.svg?height=160&width=400"}
                   alt={selectedBeach.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null
+                    e.currentTarget.src = "/placeholder.svg?height=160&width=400"
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 

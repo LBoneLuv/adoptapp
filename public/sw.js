@@ -1,4 +1,4 @@
-const CACHE_NAME = "adoptapp-v1"
+const CACHE_NAME = "adoptapp-v2"
 const RUNTIME_CACHE = "adoptapp-runtime"
 
 // Assets to cache on install
@@ -34,6 +34,13 @@ self.addEventListener("activate", (event) => {
 
 // Fetch event - network first, fallback to cache
 self.addEventListener("fetch", (event) => {
+  // Solo gestionamos peticiones GET. POST/PUT/DELETE (subidas, mutaciones…)
+  // pasan directos a la red: el Cache API no admite cachear no-GET y al
+  // intentarlo rompía las subidas (Request method 'POST' is unsupported).
+  if (event.request.method !== "GET") {
+    return
+  }
+
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) {
     return

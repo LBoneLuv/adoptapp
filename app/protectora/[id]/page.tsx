@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { createBrowserClient } from "@supabase/ssr"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, MapPin, Globe, Facebook, Instagram } from "lucide-react"
+import { ArrowLeft, MapPin, Globe, Facebook, Instagram, Heart, Check } from "lucide-react"
 import { PetCard } from "@/components/pet-card"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
 type Shelter = {
   id: string
@@ -46,13 +47,49 @@ const SocialIcon = ({ platform }: { platform: string }) => {
   }
 }
 
+const DONATION_AMOUNTS = [5, 10, 20, 50]
+
 export default function ProtectoraDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const id = params?.id as string
   const [shelter, setShelter] = useState<Shelter | null>(null)
   const [animals, setAnimals] = useState<Animal[]>([])
   const [loading, setLoading] = useState(true)
+  const [donateOpen, setDonateOpen] = useState(false)
+  const [donationAmount, setDonationAmount] = useState<number>(10)
+  const [customAmount, setCustomAmount] = useState("")
+  const [donationMessage, setDonationMessage] = useState("")
+  const [donating, setDonating] = useState(false)
+  const [donatedOk, setDonatedOk] = useState(searchParams.get("donated") === "1")
+
+  async function handleDonate() {
+    const amount = customAmount ? Number.parseFloat(customAmount) : donationAmount
+    if (!amount || amount <= 0) {
+      alert("Introduce un importe válido")
+      return
+    }
+    setDonating(true)
+    try {
+      const res = await fetch("/api/donate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shelterId: id, amount, message: donationMessage || null }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Error al donar")
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setDonateOpen(false)
+        setDonatedOk(true)
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Error al procesar la donación")
+      setDonating(false)
+    }
+  }
 
   useEffect(() => {
     if (!id) return
@@ -175,6 +212,22 @@ export default function ProtectoraDetailPage() {
           </div>
         </div>
 
+        {/* Donación */}
+        {donatedOk ? (
+          <div className="mt-4 flex items-center gap-2 bg-[#E6F4EA] text-[#1E7E34] rounded-2xl px-4 py-3 text-sm font-medium">
+            <Check className="w-5 h-5 flex-shrink-0" />
+            ¡Gracias por tu donación! Tu aportación ayuda a {shelter.name}.
+          </div>
+        ) : (
+          <Button
+            onClick={() => setDonateOpen(true)}
+            className="mt-4 w-full bg-[#6750A4] hover:bg-[#7965AF] text-white rounded-full h-12 text-base font-semibold shadow-md"
+          >
+            <Heart className="w-5 h-5 mr-2 fill-white" />
+            Donar a esta protectora
+          </Button>
+        )}
+
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-2">Sobre Nosotros</h2>
           <p className="text-muted-foreground">{shelter.description}</p>
@@ -193,6 +246,66 @@ export default function ProtectoraDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Sheet de donación */}
+      <Sheet open={donateOpen} onOpenChange={setDonateOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Donar a {shelter.name}</SheetTitle>
+            <SheetDescription>Elige un importe para apoyar su labor</SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 mt-4 px-1">
+            <div className="grid grid-cols-4 gap-2">
+              {DONATION_AMOUNTS.map((amt) => (
+                <button
+                  key={amt}
+                  onClick={() => {
+                    setDonationAmount(amt)
+                    setCustomAmount("")
+                  }}
+                  className={`py-3 rounded-2xl font-semibold text-sm transition-colors ${
+                    !customAmount && donationAmount === amt
+                      ? "bg-[#6750A4] text-white"
+                      : "bg-[#E8DEF8] text-[#6750A4]"
+                  }`}
+                >
+                  {amt}€
+                </button>
+              ))}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#49454F] mb-2">Otro importe (€)</label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
+                placeholder="Ej: 25"
+                className="w-full px-4 py-3 bg-[#FFFBFE] border-2 border-[#79747E] rounded-2xl focus:border-[#6750A4] focus:outline-none text-[#1C1B1F] text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#49454F] mb-2">Mensaje (opcional)</label>
+              <textarea
+                value={donationMessage}
+                onChange={(e) => setDonationMessage(e.target.value)}
+                rows={2}
+                placeholder="Un mensaje de ánimo para la protectora"
+                className="w-full px-4 py-3 bg-[#FFFBFE] border-2 border-[#79747E] rounded-2xl focus:border-[#6750A4] focus:outline-none text-[#1C1B1F] text-sm resize-none"
+              />
+            </div>
+            <Button
+              onClick={handleDonate}
+              disabled={donating}
+              className="w-full bg-[#6750A4] hover:bg-[#7965AF] text-white rounded-full h-12 text-base font-semibold disabled:opacity-50"
+            >
+              <Heart className="w-5 h-5 mr-2 fill-white" />
+              {donating ? "Procesando..." : `Donar ${customAmount || donationAmount}€`}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }

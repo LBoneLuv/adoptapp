@@ -20,6 +20,9 @@ export default function PerfilPage() {
     email: "",
     phone: "",
     avatar_url: "",
+    address: "",
+    city: "",
+    postal_code: "",
   })
 
   useEffect(() => {
@@ -46,6 +49,9 @@ export default function PerfilPage() {
           email: data.email || user.email || "",
           phone: data.phone || "",
           avatar_url: data.avatar_url || "",
+          address: data.address || "",
+          city: data.city || "",
+          postal_code: data.postal_code || "",
         })
       }
     } catch (error) {
@@ -81,6 +87,9 @@ export default function PerfilPage() {
           display_name: profile.display_name,
           email: profile.email,
           phone: profile.phone,
+          address: profile.address,
+          city: profile.city,
+          postal_code: profile.postal_code,
         })
         .eq("id", user.id)
 
@@ -243,6 +252,56 @@ export default function PerfilPage() {
                 onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                 className="w-full bg-[#FFFBFE] border-[#79747E] rounded-2xl px-4 text-[#1C1B1F] focus:border-[#6750A4] focus:ring-2 focus:ring-[#E8DEF8] text-sm h-11"
               />
+            </div>
+
+            {/* Shipping address section */}
+            <div className="pt-4 border-t border-[#E7E0EC]">
+              <h3 className="text-sm font-bold text-[#1C1B1F] mb-1">Dirección de envío</h3>
+              <p className="text-xs text-[#79747E] mb-4">Se usará para autocompletar tus compras en la tienda.</p>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="address" className="text-sm font-medium text-[#1C1B1F] block">
+                    Dirección
+                  </label>
+                  <Input
+                    id="address"
+                    type="text"
+                    placeholder="Calle, número, piso"
+                    value={profile.address}
+                    onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                    className="w-full bg-[#FFFBFE] border-[#79747E] rounded-2xl px-4 text-[#1C1B1F] focus:border-[#6750A4] focus:ring-2 focus:ring-[#E8DEF8] text-sm h-11"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <label htmlFor="city" className="text-sm font-medium text-[#1C1B1F] block">
+                      Ciudad
+                    </label>
+                    <Input
+                      id="city"
+                      type="text"
+                      placeholder="Ciudad"
+                      value={profile.city}
+                      onChange={(e) => setProfile({ ...profile, city: e.target.value })}
+                      className="w-full bg-[#FFFBFE] border-[#79747E] rounded-2xl px-4 text-[#1C1B1F] focus:border-[#6750A4] focus:ring-2 focus:ring-[#E8DEF8] text-sm h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="postal_code" className="text-sm font-medium text-[#1C1B1F] block">
+                      Código postal
+                    </label>
+                    <Input
+                      id="postal_code"
+                      type="text"
+                      placeholder="00000"
+                      value={profile.postal_code}
+                      onChange={(e) => setProfile({ ...profile, postal_code: e.target.value })}
+                      className="w-full bg-[#FFFBFE] border-[#79747E] rounded-2xl px-4 text-[#1C1B1F] focus:border-[#6750A4] focus:ring-2 focus:ring-[#E8DEF8] text-sm h-11"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

@@ -48,6 +48,11 @@ export function AppHeader() {
 
   const getPageTitle = () => {
     if (pathname?.startsWith("/principal")) return "Arko"
+    if (pathname?.startsWith("/servicios/veterinarios")) return "Veterinarios"
+    if (pathname?.startsWith("/servicios/adiestradores")) return "Adiestradores"
+    if (pathname?.startsWith("/servicios/paseadores")) return "Paseadores"
+    if (pathname?.startsWith("/servicios/residencias")) return "Residencias"
+    if (pathname?.startsWith("/servicios/playas")) return "Playas perrunas"
     if (pathname?.startsWith("/servicios")) return "Servicios"
     if (pathname?.startsWith("/favoritos")) return "Favoritos"
     if (pathname?.startsWith("/mis-animales")) return "Mis animales"
