@@ -10,6 +10,19 @@ export default function SuperAdminHubPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [allowed, setAllowed] = useState(false)
+  const [pending, setPending] = useState({ professionals: 0, shelters: 0 })
+
+  useEffect(() => {
+    if (!allowed) return
+    const supabase = createClient()
+    ;(async () => {
+      const [pro, sh] = await Promise.all([
+        supabase.from("professionals").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("shelters").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      ])
+      setPending({ professionals: pro.count || 0, shelters: sh.count || 0 })
+    })()
+  }, [allowed])
 
   useEffect(() => {
     async function init() {
@@ -44,9 +57,9 @@ export default function SuperAdminHubPage() {
   if (!allowed) return null
 
   const sections = [
-    { href: "/admin/super/protectoras", label: "Protectoras", desc: "Aprobar registros pendientes", icon: Building2 },
-    { href: "/admin/super/profesionales", label: "Profesionales", desc: "Veterinarios, adiestradores, paseadores, residencias", icon: Stethoscope },
-    { href: "/admin/super/tienda", label: "Tienda", desc: "Productos, categorías y banners", icon: ShoppingBag },
+    { href: "/admin/super/protectoras", label: "Protectoras", desc: "Aprobar registros pendientes", icon: Building2, badge: pending.shelters },
+    { href: "/admin/super/profesionales", label: "Profesionales", desc: "Veterinarios, adiestradores, paseadores, residencias", icon: Stethoscope, badge: pending.professionals },
+    { href: "/admin/super/tienda", label: "Tienda", desc: "Productos, categorías y banners", icon: ShoppingBag, badge: 0 },
   ]
 
   return (
@@ -70,7 +83,14 @@ export default function SuperAdminHubPage() {
                 <Icon className="w-6 h-6 text-[#6750A4]" />
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="font-semibold text-[#1C1B1F]">{s.label}</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-semibold text-[#1C1B1F]">{s.label}</h2>
+                  {s.badge > 0 && (
+                    <span className="bg-[#D32F2F] text-white text-xs font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center">
+                      {s.badge}
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-[#79747E] line-clamp-1">{s.desc}</p>
               </div>
               <ChevronRight className="w-5 h-5 text-[#79747E]" />

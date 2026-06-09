@@ -5,15 +5,24 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Home, Plus, Pencil, Trash2, MapPin, Star } from "lucide-react"
+import { Home, Plus, Pencil, Trash2, MapPin, Star, Check, X } from "lucide-react"
 import { PROFESSIONAL_TYPES, type Professional, type ProfessionalType } from "@/lib/professionals-config"
+
+type StatusFilter = "all" | "pending" | "approved" | "rejected"
+
+const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+  pending: { label: "Pendiente", cls: "text-[#B26A00] bg-[#FFF4E5]" },
+  rejected: { label: "Rechazado", cls: "text-[#C5221F] bg-[#FDECEA]" },
+  approved: { label: "Aprobado", cls: "text-[#1E7E34] bg-[#E6F4EA]" },
+}
 
 export default function SuperProfesionalesPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [allowed, setAllowed] = useState(false)
   const [professionals, setProfessionals] = useState<Professional[]>([])
-  const [filter, setFilter] = useState<ProfessionalType | "all">("all")
+  const [typeFilter, setTypeFilter] = useState<ProfessionalType | "all">("all")
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
 
   useEffect(() => {
     async function init() {
@@ -46,6 +55,16 @@ export default function SuperProfesionalesPage() {
     setProfessionals((data as Professional[]) || [])
   }
 
+  async function setStatus(id: string, status: "approved" | "rejected" | "pending") {
+    const supabase = createClient()
+    const { error } = await supabase.from("professionals").update({ status }).eq("id", id)
+    if (error) {
+      alert("Error al actualizar el estado")
+      return
+    }
+    setProfessionals((p) => p.map((x) => (x.id === id ? { ...x, status } : x)))
+  }
+
   async function remove(id: string, name: string) {
     if (!confirm(`¿Eliminar "${name}"? Esta acción no se puede deshacer.`)) return
     const supabase = createClient()
@@ -66,7 +85,18 @@ export default function SuperProfesionalesPage() {
   }
   if (!allowed) return null
 
-  const filtered = filter === "all" ? professionals : professionals.filter((p) => p.type === filter)
+  const pendingCount = professionals.filter((p) => p.status === "pending").length
+  const filtered = professionals.filter(
+    (p) =>
+      (typeFilter === "all" || p.type === typeFilter) && (statusFilter === "all" || p.status === statusFilter),
+  )
+
+  const statusChips: { id: StatusFilter; label: string }[] = [
+    { id: "all", label: `Todas (${professionals.length})` },
+    { id: "pending", label: `Pendientes (${pendingCount})` },
+    { id: "approved", label: "Aprobadas" },
+    { id: "rejected", label: "Rechazadas" },
+  ]
 
   return (
     <div className="min-h-screen bg-[#FEF7FF] pb-24">
@@ -84,82 +114,138 @@ export default function SuperProfesionalesPage() {
         </div>
       </header>
 
-      {/* Type filter */}
-      <div className="px-4 py-3 flex gap-2 overflow-x-auto">
+      {/* Pending banner */}
+      {pendingCount > 0 && statusFilter !== "pending" && (
         <button
-          onClick={() => setFilter("all")}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${
-            filter === "all" ? "bg-[#6750A4] text-white" : "bg-[#E8DEF8] text-[#6750A4]"
-          }`}
+          onClick={() => setStatusFilter("pending")}
+          className="mx-4 mt-3 w-[calc(100%-2rem)] flex items-center justify-between bg-[#FFF4E5] text-[#B26A00] rounded-2xl px-4 py-3 text-sm font-medium"
         >
-          Todos ({professionals.length})
+          <span>
+            Tienes {pendingCount} {pendingCount === 1 ? "solicitud pendiente" : "solicitudes pendientes"} de aprobación
+          </span>
+          <span className="font-semibold underline">Revisar</span>
         </button>
-        {Object.values(PROFESSIONAL_TYPES).map((t) => {
-          const count = professionals.filter((p) => p.type === t.type).length
-          return (
-            <button
-              key={t.type}
-              onClick={() => setFilter(t.type)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${
-                filter === t.type ? "bg-[#6750A4] text-white" : "bg-[#E8DEF8] text-[#6750A4]"
-              }`}
-            >
-              {t.labelPlural} ({count})
-            </button>
-          )
-        })}
+      )}
+
+      {/* Status filter */}
+      <div className="px-4 pt-3 flex gap-2 overflow-x-auto">
+        {statusChips.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setStatusFilter(s.id)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${
+              statusFilter === s.id ? "bg-[#6750A4] text-white" : "bg-[#E8DEF8] text-[#6750A4]"
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
       </div>
 
-      <div className="px-4 py-2 space-y-3">
+      {/* Type filter */}
+      <div className="px-4 pt-2 flex gap-2 overflow-x-auto">
+        <button
+          onClick={() => setTypeFilter("all")}
+          className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+            typeFilter === "all" ? "bg-[#6750A4] text-white" : "bg-[#FFFBFE] text-[#6750A4] border border-[#E8DEF8]"
+          }`}
+        >
+          Todos los tipos
+        </button>
+        {Object.values(PROFESSIONAL_TYPES).map((t) => (
+          <button
+            key={t.type}
+            onClick={() => setTypeFilter(t.type)}
+            className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+              typeFilter === t.type ? "bg-[#6750A4] text-white" : "bg-[#FFFBFE] text-[#6750A4] border border-[#E8DEF8]"
+            }`}
+          >
+            {t.labelPlural}
+          </button>
+        ))}
+      </div>
+
+      <div className="px-4 py-3 space-y-3">
         {filtered.length === 0 ? (
-          <p className="text-center text-[#79747E] py-12">No hay profesionales todavía.</p>
+          <p className="text-center text-[#79747E] py-12">No hay profesionales en esta vista.</p>
         ) : (
-          filtered.map((p) => (
-            <div key={p.id} className="bg-[#FFFBFE] rounded-3xl p-3 flex items-center gap-3 shadow-md">
-              <img
-                src={p.profile_image_url || "/placeholder.svg?height=64&width=64"}
-                alt={p.name}
-                className="w-16 h-16 rounded-2xl object-cover bg-[#E8DEF8] flex-shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase font-bold text-[#6750A4] bg-[#E8DEF8] px-2 py-0.5 rounded-full">
-                    {PROFESSIONAL_TYPES[p.type].label}
-                  </span>
-                  {p.status !== "approved" && (
-                    <span className="text-[10px] font-bold text-[#C5221F] bg-[#FDECEA] px-2 py-0.5 rounded-full">
-                      {p.status}
-                    </span>
-                  )}
+          filtered.map((p) => {
+            const badge = STATUS_BADGE[p.status] || STATUS_BADGE.pending
+            return (
+              <div key={p.id} className="bg-[#FFFBFE] rounded-3xl p-3 shadow-md">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={p.profile_image_url || "/placeholder.svg?height=64&width=64"}
+                    alt={p.name}
+                    className="w-16 h-16 rounded-2xl object-cover bg-[#E8DEF8] flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] uppercase font-bold text-[#6750A4] bg-[#E8DEF8] px-2 py-0.5 rounded-full">
+                        {PROFESSIONAL_TYPES[p.type].label}
+                      </span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${badge.cls}`}>
+                        {badge.label}
+                      </span>
+                    </div>
+                    <h3 className="font-semibold text-[#1C1B1F] text-sm line-clamp-1 mt-0.5">{p.name}</h3>
+                    <div className="flex items-center gap-2 text-xs text-[#79747E]">
+                      <span className="flex items-center gap-0.5">
+                        <MapPin className="w-3 h-3" /> {p.location}
+                      </span>
+                      {p.rating != null && (
+                        <span className="flex items-center gap-0.5">
+                          <Star className="w-3 h-3 fill-[#FFC107] text-[#FFC107]" /> {p.rating}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Link
+                      href={`/admin/super/profesionales/${p.id}`}
+                      className="w-9 h-9 flex items-center justify-center rounded-full bg-[#E8DEF8] hover:bg-[#D0BCFF]"
+                    >
+                      <Pencil className="w-4 h-4 text-[#6750A4]" />
+                    </Link>
+                    <button
+                      onClick={() => remove(p.id, p.name)}
+                      className="w-9 h-9 flex items-center justify-center rounded-full bg-[#FDECEA] hover:bg-[#f8d7d4]"
+                    >
+                      <Trash2 className="w-4 h-4 text-[#C5221F]" />
+                    </button>
+                  </div>
                 </div>
-                <h3 className="font-semibold text-[#1C1B1F] text-sm line-clamp-1 mt-0.5">{p.name}</h3>
-                <div className="flex items-center gap-2 text-xs text-[#79747E]">
-                  <span className="flex items-center gap-0.5">
-                    <MapPin className="w-3 h-3" /> {p.location}
-                  </span>
-                  {p.rating != null && (
-                    <span className="flex items-center gap-0.5">
-                      <Star className="w-3 h-3 fill-[#FFC107] text-[#FFC107]" /> {p.rating}
-                    </span>
-                  )}
-                </div>
+
+                {/* Approval actions */}
+                {p.status !== "approved" && (
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => setStatus(p.id, "approved")}
+                      className="flex-1 flex items-center justify-center gap-1 bg-[#1E7E34] text-white rounded-full h-9 text-sm font-semibold hover:bg-[#176a2b]"
+                    >
+                      <Check className="w-4 h-4" /> Aprobar
+                    </button>
+                    {p.status !== "rejected" && (
+                      <button
+                        onClick={() => setStatus(p.id, "rejected")}
+                        className="flex-1 flex items-center justify-center gap-1 bg-[#FDECEA] text-[#C5221F] rounded-full h-9 text-sm font-semibold hover:bg-[#f8d7d4]"
+                      >
+                        <X className="w-4 h-4" /> Rechazar
+                      </button>
+                    )}
+                  </div>
+                )}
+                {p.status === "approved" && (
+                  <button
+                    onClick={() => setStatus(p.id, "pending")}
+                    className="mt-3 w-full flex items-center justify-center gap-1 bg-[#F5F5F5] text-[#49454F] rounded-full h-9 text-sm font-medium hover:bg-[#ececec]"
+                  >
+                    Despublicar (volver a pendiente)
+                  </button>
+                )}
               </div>
-              <div className="flex flex-col gap-2">
-                <Link
-                  href={`/admin/super/profesionales/${p.id}`}
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-[#E8DEF8] hover:bg-[#D0BCFF]"
-                >
-                  <Pencil className="w-4 h-4 text-[#6750A4]" />
-                </Link>
-                <button
-                  onClick={() => remove(p.id, p.name)}
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-[#FDECEA] hover:bg-[#f8d7d4]"
-                >
-                  <Trash2 className="w-4 h-4 text-[#C5221F]" />
-                </button>
-              </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
     </div>
