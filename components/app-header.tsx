@@ -4,7 +4,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import useSWR from "swr"
 import { useEffect, useState } from "react"
-import { MessageCircle, Heart } from "lucide-react"
+import { MessageCircle, Heart, LayoutDashboard } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 const fetcher = async (url: string) => {
   const res = await fetch(url)
@@ -21,10 +22,50 @@ export function AppHeader() {
   })
   const [mounted, setMounted] = useState(false)
   const [totalUnread, setTotalUnread] = useState(0)
+  const [adminTarget, setAdminTarget] = useState<{ href: string; label: string } | null>(null)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Detecta el rol del usuario para mostrar el acceso a su panel de gestión.
+  useEffect(() => {
+    if (!mounted || !user?.id) {
+      setAdminTarget(null)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      const supabase = createClient()
+      const { data: shelter } = await supabase
+        .from("shelters")
+        .select("id, role")
+        .eq("id", user.id)
+        .maybeSingle()
+
+      const isSuperAdmin = user?.profile?.role === "super_admin" || shelter?.role === "super_admin"
+      if (cancelled) return
+      if (isSuperAdmin) {
+        setAdminTarget({ href: "/admin/super", label: "Panel super admin" })
+        return
+      }
+      if (shelter) {
+        setAdminTarget({ href: "/admin/animales", label: "Panel de mi protectora" })
+        return
+      }
+      const { data: pro } = await supabase
+        .from("professionals")
+        .select("id")
+        .eq("owner_id", user.id)
+        .limit(1)
+        .maybeSingle()
+      if (cancelled) return
+      setAdminTarget(pro ? { href: "/profesional/panel", label: "Panel de mi negocio" } : null)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [mounted, user])
 
   useEffect(() => {
     if (mounted && user) {
@@ -77,6 +118,16 @@ export function AppHeader() {
         )}
       </Link>
       <div className="flex items-center gap-3">
+        {mounted && adminTarget && (
+          <Link
+            href={adminTarget.href}
+            title={adminTarget.label}
+            aria-label={adminTarget.label}
+            className="w-10 h-10 rounded-full bg-[#6750A4] flex items-center justify-center hover:bg-[#7965AF] transition-colors shadow-sm"
+          >
+            <LayoutDashboard className="w-5 h-5 text-white" />
+          </Link>
+        )}
         <Link
           href="/favoritos"
           className={`w-10 h-10 rounded-full flex items-center justify-center hover:bg-[#E8DEF8] transition-colors ${

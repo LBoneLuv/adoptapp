@@ -47,9 +47,17 @@ async function uploadFile(file: File): Promise<string> {
 
 interface ProfessionalFormProps {
   initial?: Professional | null
+  /** modo autoservicio para el propio profesional: oculta tipo, verificado, destacado y estado */
+  selfService?: boolean
+  /** a dónde redirige tras guardar */
+  redirectTo?: string
 }
 
-export function ProfessionalForm({ initial }: ProfessionalFormProps) {
+export function ProfessionalForm({
+  initial,
+  selfService = false,
+  redirectTo = "/admin/super/profesionales",
+}: ProfessionalFormProps) {
   const router = useRouter()
   const isEdit = !!initial
   const [saving, setSaving] = useState(false)
@@ -151,22 +159,24 @@ export function ProfessionalForm({ initial }: ProfessionalFormProps) {
       return
     }
     showToast("✓ Guardado correctamente")
-    setTimeout(() => router.push("/admin/super/profesionales"), 800)
+    setTimeout(() => router.push(redirectTo), 800)
   }
 
   return (
     <div className="space-y-6 pb-28">
-      {/* Tipo */}
-      <div>
-        <label className={labelCls}>Tipo de profesional *</label>
-        <select value={type} onChange={(e) => setType(e.target.value as ProfessionalType)} className={inputCls}>
-          {Object.values(PROFESSIONAL_TYPES).map((t) => (
-            <option key={t.type} value={t.type}>
-              {t.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Tipo (solo lo elige el admin) */}
+      {!selfService && (
+        <div>
+          <label className={labelCls}>Tipo de profesional *</label>
+          <select value={type} onChange={(e) => setType(e.target.value as ProfessionalType)} className={inputCls}>
+            {Object.values(PROFESSIONAL_TYPES).map((t) => (
+              <option key={t.type} value={t.type}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Imágenes */}
       <div>
@@ -469,11 +479,14 @@ export function ProfessionalForm({ initial }: ProfessionalFormProps) {
 
       {/* Flags */}
       <div className="bg-[#FFFBFE] rounded-3xl shadow-md p-4 space-y-4 text-sm">
-        {[
-          { label: "Verificado", value: verified, set: setVerified },
-          { label: "Destacado", value: featured, set: setFeatured },
-          { label: "Urgencias 24h", value: emergency24h, set: setEmergency24h },
-        ].map((t) => (
+        {(selfService
+          ? [{ label: "Urgencias 24h", value: emergency24h, set: setEmergency24h }]
+          : [
+              { label: "Verificado", value: verified, set: setVerified },
+              { label: "Destacado", value: featured, set: setFeatured },
+              { label: "Urgencias 24h", value: emergency24h, set: setEmergency24h },
+            ]
+        ).map((t) => (
           <div key={t.label} className="flex items-center justify-between">
             <span className="text-[#1C1B1F] font-medium">{t.label}</span>
             <button
@@ -485,14 +498,16 @@ export function ProfessionalForm({ initial }: ProfessionalFormProps) {
             </button>
           </div>
         ))}
-        <div>
-          <label className={labelCls}>Estado</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value)} className={inputCls}>
-            <option value="approved">Aprobado (visible)</option>
-            <option value="pending">Pendiente</option>
-            <option value="rejected">Rechazado</option>
-          </select>
-        </div>
+        {!selfService && (
+          <div>
+            <label className={labelCls}>Estado</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className={inputCls}>
+              <option value="approved">Aprobado (visible)</option>
+              <option value="pending">Pendiente</option>
+              <option value="rejected">Rechazado</option>
+            </select>
+          </div>
+        )}
       </div>
 
       <Button
