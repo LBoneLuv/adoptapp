@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { createClient } from "@/lib/supabase/client"
+import { translateAuthError } from "@/lib/auth-errors"
 
 export default function RegistroProtectoraPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false)
@@ -61,7 +62,7 @@ export default function RegistroProtectoraPage() {
       // Show success message
       router.push("/auth/check-email")
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Error al enviar la solicitud")
+      setError(translateAuthError(error))
     } finally {
       setIsLoading(false)
     }

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { createClient } from "@/lib/supabase/client"
+import { translateAuthError } from "@/lib/auth-errors"
 import { PROFESSIONAL_TYPES, type ProfessionalType } from "@/lib/professionals-config"
 
 const inputCls =
@@ -60,7 +61,7 @@ export default function RegistroProfesionalPage() {
       if (authError) throw authError
       router.push("/auth/check-email")
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Error al enviar la solicitud")
+      setError(translateAuthError(error))
     } finally {
       setIsLoading(false)
     }

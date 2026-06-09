@@ -9,6 +9,7 @@ import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { createClient } from "@/lib/supabase/client"
+import { translateAuthError } from "@/lib/auth-errors"
 
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<"usuario" | "protectora" | "profesional">("usuario")
@@ -70,7 +71,7 @@ export default function LoginPage() {
         }
       }
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Error al iniciar sesión")
+      setError(translateAuthError(error))
     } finally {
       setIsLoading(false)
     }

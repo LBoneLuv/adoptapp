@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { createClient } from "@/lib/supabase/client"
+import { translateAuthError } from "@/lib/auth-errors"
 
 export default function RegistroPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false)
@@ -55,7 +56,7 @@ export default function RegistroPage() {
 
       router.push("/auth/check-email")
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Error al crear la cuenta")
+      setError(translateAuthError(error))
     } finally {
       setIsLoading(false)
     }
