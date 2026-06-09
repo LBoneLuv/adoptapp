@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Arko</string>
+    <string name="title_activity_main">Arko</string>
+    <string name="package_name">com.arko.adoptapp</string>
+    <string name="custom_url_scheme">com.arko.adoptapp</string>
+</resources>
