@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { createClient } from "@/lib/supabase/client"
 
 export default function LoginPage() {
-  const [activeTab, setActiveTab] = useState<"usuario" | "protectora">("usuario")
+  const [activeTab, setActiveTab] = useState<"usuario" | "protectora" | "profesional">("usuario")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -102,26 +102,25 @@ export default function LoginPage() {
         <div className="max-w-md mx-auto">
           {/* Role Tabs */}
           <div className="flex bg-[#E8DEF8] rounded-full p-1 mb-8">
-            <button
-              onClick={() => setActiveTab("usuario")}
-              className={`flex-1 py-3 px-6 rounded-full text-sm font-semibold transition-all ${
-                activeTab === "usuario"
-                  ? "bg-[#6750A4] text-white shadow-md"
-                  : "bg-transparent text-[#6750A4] hover:bg-[#D0BCFF]/30"
-              }`}
-            >
-              Usuario
-            </button>
-            <button
-              onClick={() => setActiveTab("protectora")}
-              className={`flex-1 py-3 px-6 rounded-full text-sm font-semibold transition-all ${
-                activeTab === "protectora"
-                  ? "bg-[#6750A4] text-white shadow-md"
-                  : "bg-transparent text-[#6750A4] hover:bg-[#D0BCFF]/30"
-              }`}
-            >
-              Protectora
-            </button>
+            {(
+              [
+                { id: "usuario", label: "Usuario" },
+                { id: "protectora", label: "Protectora" },
+                { id: "profesional", label: "Profesional" },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 py-2.5 px-2 rounded-full text-sm font-semibold transition-all ${
+                  activeTab === tab.id
+                    ? "bg-[#6750A4] text-white shadow-md"
+                    : "bg-transparent text-[#6750A4] hover:bg-[#D0BCFF]/30"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           {/* Form */}
@@ -200,12 +199,22 @@ export default function LoginPage() {
           {/* Register Link (depende de la pestaña activa) */}
           <div className="mt-8 text-center">
             <p className="text-[#49454F]">
-              {activeTab === "protectora" ? "¿Aún no estás registrada?" : "¿No tienes cuenta?"}{" "}
+              {activeTab === "usuario" ? "¿No tienes cuenta?" : "¿Aún no estás registrado?"}{" "}
               <Link
-                href={activeTab === "protectora" ? "/registro-protectora" : "/registro"}
+                href={
+                  activeTab === "protectora"
+                    ? "/registro-protectora"
+                    : activeTab === "profesional"
+                      ? "/registro-profesional"
+                      : "/registro"
+                }
                 className="text-[#6750A4] font-semibold hover:underline"
               >
-                {activeTab === "protectora" ? "Registra tu protectora" : "Regístrate"}
+                {activeTab === "protectora"
+                  ? "Registra tu protectora"
+                  : activeTab === "profesional"
+                    ? "Registra tu negocio"
+                    : "Regístrate"}
               </Link>
             </p>
           </div>

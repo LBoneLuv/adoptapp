@@ -93,14 +93,25 @@ export default function WelcomePage() {
               Crear cuenta gratis
             </Button>
           </Link>
-          <Link href="/registro-protectora" className="w-full">
-            <Button
-              variant="outline"
-              className="w-full border-2 border-[#6750A4] text-[#6750A4] hover:bg-[#E8DEF8] rounded-full font-semibold bg-transparent text-base h-12"
-            >
-              Soy una protectora
-            </Button>
-          </Link>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Link href="/registro-protectora">
+              <Button
+                variant="outline"
+                className="w-full border-2 border-[#6750A4] text-[#6750A4] hover:bg-[#E8DEF8] rounded-full font-semibold bg-transparent text-sm h-11"
+              >
+                Soy protectora
+              </Button>
+            </Link>
+            <Link href="/registro-profesional">
+              <Button
+                variant="outline"
+                className="w-full border-2 border-[#6750A4] text-[#6750A4] hover:bg-[#E8DEF8] rounded-full font-semibold bg-transparent text-sm h-11"
+              >
+                Soy profesional
+              </Button>
+            </Link>
+          </div>
 
           <p className="text-[#49454F] text-center text-xs mt-1 leading-relaxed">
             Adopta, gestiona a tus mascotas y accede a todos los servicios.
