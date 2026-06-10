@@ -1,167 +1,202 @@
-import { createServerClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Home } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
+import { Home, Pencil, Trash2, MapPin, Check, X } from "lucide-react"
+import type { ShelterRecord } from "@/components/shelter-form"
 
-async function checkSuperAdmin() {
-  const supabase = await createServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+type StatusFilter = "all" | "pending" | "approved" | "rejected"
 
-  if (!user) {
-    redirect("/login")
-  }
-
-  // Check if user is super admin in profiles or shelters
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-
-  const { data: shelter } = await supabase.from("shelters").select("role").eq("id", user.id).single()
-
-  const isSuperAdmin = profile?.role === "super_admin" || shelter?.role === "super_admin"
-
-  if (!isSuperAdmin) {
-    redirect("/adopta")
-  }
-
-  return supabase
+const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+  pending: { label: "Pendiente", cls: "text-[#B26A00] bg-[#FFF4E5]" },
+  rejected: { label: "Rechazada", cls: "text-[#C5221F] bg-[#FDECEA]" },
+  approved: { label: "Aprobada", cls: "text-[#1E7E34] bg-[#E6F4EA]" },
 }
 
-async function getPendingShelters() {
-  const supabase = await checkSuperAdmin()
+export default function SuperProtectorasPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [allowed, setAllowed] = useState(false)
+  const [shelters, setShelters] = useState<ShelterRecord[]>([])
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
 
-  const { data, error } = await supabase
-    .from("shelters")
-    .select("*")
-    .eq("status", "pending")
-    .order("created_at", { ascending: false })
+  useEffect(() => {
+    async function init() {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        router.replace("/login")
+        return
+      }
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
+      const { data: sh } = await supabase.from("shelters").select("role").eq("id", user.id).maybeSingle()
+      if (profile?.role !== "super_admin" && sh?.role !== "super_admin") {
+        router.replace("/adopta")
+        return
+      }
+      setAllowed(true)
+      await load()
+      setLoading(false)
+    }
+    init()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  if (error) {
-    console.error("[v0] Error loading pending shelters:", error)
-    return []
+  async function load() {
+    const supabase = createClient()
+    const { data } = await supabase.from("shelters").select("*").order("created_at", { ascending: false })
+    setShelters((data as ShelterRecord[]) || [])
   }
 
-  return data || []
-}
-
-async function approveShelter(shelterId: string) {
-  "use server"
-  const supabase = await checkSuperAdmin()
-
-  const { error } = await supabase
-    .from("shelters")
-    .update({ status: "approved", updated_at: new Date().toISOString() })
-    .eq("id", shelterId)
-
-  if (error) {
-    console.error("[v0] Error approving shelter:", error)
-    throw new Error("Error al aprobar la protectora")
+  async function setStatus(id: string, status: "approved" | "rejected" | "pending") {
+    const supabase = createClient()
+    const { error } = await supabase.from("shelters").update({ status }).eq("id", id)
+    if (error) {
+      alert("Error al actualizar el estado")
+      return
+    }
+    setShelters((s) => s.map((x) => (x.id === id ? { ...x, status } : x)))
   }
 
-  redirect("/admin/super/protectoras")
-}
-
-async function rejectShelter(shelterId: string) {
-  "use server"
-  const supabase = await checkSuperAdmin()
-
-  const { error } = await supabase
-    .from("shelters")
-    .update({ status: "rejected", updated_at: new Date().toISOString() })
-    .eq("id", shelterId)
-
-  if (error) {
-    console.error("[v0] Error rejecting shelter:", error)
-    throw new Error("Error al rechazar la protectora")
+  async function remove(id: string, name: string) {
+    if (!confirm(`¿Eliminar "${name}"? Esta acción no se puede deshacer.`)) return
+    const supabase = createClient()
+    const { error } = await supabase.from("shelters").delete().eq("id", id)
+    if (error) {
+      alert("Error al eliminar")
+      return
+    }
+    setShelters((s) => s.filter((x) => x.id !== id))
   }
 
-  redirect("/admin/super/protectoras")
-}
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#FEF7FF]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6750A4]" />
+      </div>
+    )
+  }
+  if (!allowed) return null
 
-export default async function SuperAdminProtectorasPage() {
-  const shelters = await getPendingShelters()
+  const pendingCount = shelters.filter((s) => s.status === "pending").length
+  const filtered = shelters.filter((s) => statusFilter === "all" || s.status === statusFilter)
+
+  const statusChips: { id: StatusFilter; label: string }[] = [
+    { id: "all", label: `Todas (${shelters.length})` },
+    { id: "pending", label: `Pendientes (${pendingCount})` },
+    { id: "approved", label: "Aprobadas" },
+    { id: "rejected", label: "Rechazadas" },
+  ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-amber-600">Panel Super Admin</h1>
-          <Link href="/adopta">
-            <Button variant="ghost" size="icon">
-              <Home className="h-5 w-5" />
-            </Button>
-          </Link>
-        </div>
+    <div className="min-h-screen bg-[#FEF7FF] pb-24">
+      <header className="px-4 py-4 bg-[#FFFBFE] shadow-sm sticky top-0 z-10 flex items-center justify-between">
+        <h1 className="font-bold text-[#1C1B1F] text-lg">Protectoras</h1>
+        <Link href="/adopta" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#E8DEF8]">
+          <Home className="w-5 h-5 text-[#6750A4]" />
+        </Link>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Protectoras Pendientes</h2>
-          <p className="text-gray-600">Revisa y aprueba las protectoras que se han registrado</p>
-        </div>
+      {pendingCount > 0 && statusFilter !== "pending" && (
+        <button
+          onClick={() => setStatusFilter("pending")}
+          className="mx-4 mt-3 w-[calc(100%-2rem)] flex items-center justify-between bg-[#FFF4E5] text-[#B26A00] rounded-2xl px-4 py-3 text-sm font-medium"
+        >
+          <span>
+            Tienes {pendingCount} {pendingCount === 1 ? "solicitud pendiente" : "solicitudes pendientes"} de aprobación
+          </span>
+          <span className="font-semibold underline">Revisar</span>
+        </button>
+      )}
 
-        {shelters.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-gray-500">No hay protectoras pendientes de aprobación</p>
-            </CardContent>
-          </Card>
+      <div className="px-4 pt-3 flex gap-2 overflow-x-auto">
+        {statusChips.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setStatusFilter(s.id)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${
+              statusFilter === s.id ? "bg-[#6750A4] text-white" : "bg-[#E8DEF8] text-[#6750A4]"
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="px-4 py-3 space-y-3">
+        {filtered.length === 0 ? (
+          <p className="text-center text-[#79747E] py-12">No hay protectoras en esta vista.</p>
         ) : (
-          <div className="grid gap-6">
-            {shelters.map((shelter) => (
-              <Card key={shelter.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle>{shelter.name}</CardTitle>
-                      <CardDescription>{shelter.email}</CardDescription>
-                    </div>
-                    <Badge variant="secondary">Pendiente</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Ubicación</p>
-                      <p className="text-sm text-gray-600">{shelter.location || "No especificada"}</p>
-                    </div>
-
-                    {shelter.phone && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Teléfono</p>
-                        <p className="text-sm text-gray-600">{shelter.phone}</p>
-                      </div>
-                    )}
-
-                    {shelter.description && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Descripción</p>
-                        <p className="text-sm text-gray-600">{shelter.description}</p>
-                      </div>
-                    )}
-
-                    <div className="flex gap-3 pt-4">
-                      <form action={approveShelter.bind(null, shelter.id)} className="flex-1">
-                        <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-                          Aprobar
-                        </Button>
-                      </form>
-                      <form action={rejectShelter.bind(null, shelter.id)} className="flex-1">
-                        <Button type="submit" variant="destructive" className="w-full">
-                          Rechazar
-                        </Button>
-                      </form>
+          filtered.map((s) => {
+            const badge = STATUS_BADGE[s.status] || STATUS_BADGE.pending
+            return (
+              <div key={s.id} className="bg-[#FFFBFE] rounded-3xl p-3 shadow-md">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={s.profile_image_url || "/placeholder.svg?height=64&width=64"}
+                    alt={s.name}
+                    className="w-16 h-16 rounded-2xl object-cover bg-[#E8DEF8] flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+                    <h3 className="font-semibold text-[#1C1B1F] text-sm line-clamp-1 mt-0.5">{s.name}</h3>
+                    <div className="flex items-center gap-2 text-xs text-[#79747E]">
+                      <span className="flex items-center gap-0.5">
+                        <MapPin className="w-3 h-3" /> {s.location}
+                      </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  <div className="flex flex-col gap-2">
+                    <Link
+                      href={`/admin/super/protectoras/${s.id}`}
+                      className="w-9 h-9 flex items-center justify-center rounded-full bg-[#E8DEF8] hover:bg-[#D0BCFF]"
+                    >
+                      <Pencil className="w-4 h-4 text-[#6750A4]" />
+                    </Link>
+                    <button
+                      onClick={() => remove(s.id, s.name)}
+                      className="w-9 h-9 flex items-center justify-center rounded-full bg-[#FDECEA] hover:bg-[#f8d7d4]"
+                    >
+                      <Trash2 className="w-4 h-4 text-[#C5221F]" />
+                    </button>
+                  </div>
+                </div>
+
+                {s.status !== "approved" && (
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => setStatus(s.id, "approved")}
+                      className="flex-1 flex items-center justify-center gap-1 bg-[#1E7E34] text-white rounded-full h-9 text-sm font-semibold hover:bg-[#176a2b]"
+                    >
+                      <Check className="w-4 h-4" /> Aprobar
+                    </button>
+                    {s.status !== "rejected" && (
+                      <button
+                        onClick={() => setStatus(s.id, "rejected")}
+                        className="flex-1 flex items-center justify-center gap-1 bg-[#FDECEA] text-[#C5221F] rounded-full h-9 text-sm font-semibold hover:bg-[#f8d7d4]"
+                      >
+                        <X className="w-4 h-4" /> Rechazar
+                      </button>
+                    )}
+                  </div>
+                )}
+                {s.status === "approved" && (
+                  <button
+                    onClick={() => setStatus(s.id, "pending")}
+                    className="mt-3 w-full flex items-center justify-center gap-1 bg-[#F5F5F5] text-[#49454F] rounded-full h-9 text-sm font-medium hover:bg-[#ececec]"
+                  >
+                    Despublicar (volver a pendiente)
+                  </button>
+                )}
+              </div>
+            )
+          })
         )}
-      </main>
+      </div>
     </div>
   )
 }
