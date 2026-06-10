@@ -4,24 +4,25 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { Building2, Stethoscope, ShoppingBag, Home, ChevronRight, Package, Ticket } from "lucide-react"
+import { Building2, Stethoscope, ShoppingBag, Home, ChevronRight, Package, Ticket, MessageSquare } from "lucide-react"
 
 export default function SuperAdminHubPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [allowed, setAllowed] = useState(false)
-  const [pending, setPending] = useState({ professionals: 0, shelters: 0, orders: 0 })
+  const [pending, setPending] = useState({ professionals: 0, shelters: 0, orders: 0, feedback: 0 })
 
   useEffect(() => {
     if (!allowed) return
     const supabase = createClient()
     ;(async () => {
-      const [pro, sh, ord] = await Promise.all([
+      const [pro, sh, ord, fb] = await Promise.all([
         supabase.from("professionals").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("shelters").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "paid"),
+        supabase.from("app_feedback").select("id", { count: "exact", head: true }).eq("status", "new"),
       ])
-      setPending({ professionals: pro.count || 0, shelters: sh.count || 0, orders: ord.count || 0 })
+      setPending({ professionals: pro.count || 0, shelters: sh.count || 0, orders: ord.count || 0, feedback: fb.count || 0 })
     })()
   }, [allowed])
 
@@ -63,6 +64,7 @@ export default function SuperAdminHubPage() {
     { href: "/admin/super/tienda", label: "Tienda", desc: "Productos, categorías y banners", icon: ShoppingBag, badge: 0 },
     { href: "/admin/super/pedidos", label: "Pedidos", desc: "Gestiona y actualiza el estado de los pedidos", icon: Package, badge: pending.orders },
     { href: "/admin/super/cupones", label: "Cupones", desc: "Códigos de descuento de la tienda", icon: Ticket, badge: 0 },
+    { href: "/admin/super/feedback", label: "Sugerencias y bugs", desc: "Feedback de los usuarios", icon: MessageSquare, badge: pending.feedback },
   ]
 
   return (

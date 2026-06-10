@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import Stripe from "stripe"
+import { sendEmail, orderConfirmationHtml } from "@/lib/email"
+import { sendPushToUser } from "@/lib/push"
 
 // El webhook no tiene sesión de usuario: usamos la service role key para
 // actualizar el pedido y vaciar el carrito saltándonos RLS.
@@ -35,6 +37,7 @@ export async function POST(request: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session
     const orderId = session.metadata?.order_id
     const donationId = session.metadata?.donation_id
+    const creatorDonationId = session.metadata?.creator_donation_id
     const userId = session.metadata?.user_id
     const supabase = adminClient()
 
@@ -42,11 +45,17 @@ export async function POST(request: NextRequest) {
     if (donationId) {
       await supabase
         .from("donations")
-        .update({
-          status: "paid",
-          stripe_payment_intent: (session.payment_intent as string) || null,
-        })
+        .update({ status: "paid", stripe_payment_intent: (session.payment_intent as string) || null })
         .eq("id", donationId)
+      return NextResponse.json({ received: true })
+    }
+
+    // Donación al creador
+    if (creatorDonationId) {
+      await supabase
+        .from("creator_donations")
+        .update({ status: "paid", stripe_payment_intent: (session.payment_intent as string) || null })
+        .eq("id", creatorDonationId)
       return NextResponse.json({ received: true })
     }
 
@@ -78,6 +87,38 @@ export async function POST(request: NextRequest) {
             .update({ stock: Math.max(0, (prod.stock || 0) - item.quantity) })
             .eq("id", item.product_id)
         }
+      }
+
+      // Email de confirmación + push al usuario
+      const { data: order } = await supabase
+        .from("orders")
+        .select("user_id, total, discount, coupon_code, shipping_name, shipping_email")
+        .eq("id", orderId)
+        .maybeSingle()
+      const { data: fullItems } = await supabase
+        .from("order_items")
+        .select("product_name, quantity, unit_price")
+        .eq("order_id", orderId)
+      if (order?.shipping_email) {
+        await sendEmail({
+          to: order.shipping_email,
+          subject: "Confirmación de tu pedido",
+          html: orderConfirmationHtml({
+            orderId,
+            name: order.shipping_name,
+            items: (fullItems as any[]) || [],
+            total: order.total,
+            discount: order.discount,
+            couponCode: order.coupon_code,
+          }),
+        })
+      }
+      if (order?.user_id) {
+        await sendPushToUser(order.user_id, {
+          title: "Pago confirmado",
+          message: `Hemos recibido tu pago. Tu pedido #${orderId.slice(0, 8).toUpperCase()} está en marcha.`,
+          url: "/tienda/pedidos",
+        })
       }
     }
 

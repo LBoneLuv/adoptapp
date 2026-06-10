@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { MapPin, Navigation, List, ImageIcon, Home } from "lucide-react"
+import { MapPin, Navigation, List, ImageIcon, Home, PawPrint } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { createBrowserClient } from "@supabase/ssr"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
@@ -9,6 +9,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import dynamic from "next/dynamic"
 import { normalizeBeachImage, normalizeBeachPhotos } from "@/lib/beach-image"
+
+// Imagen de playa con fallback (lila + patita) cuando no hay foto o falla.
+function BeachImage({ src, alt, className }: { src: string | null; alt: string; className?: string }) {
+  const [err, setErr] = useState(false)
+  if (!src || err) {
+    return (
+      <div className={`${className} bg-gradient-to-br from-[#E8DEF8] to-[#D0BCFF] flex items-center justify-center`}>
+        <PawPrint className="w-1/3 h-1/3 max-w-16 max-h-16 text-[#6750A4]/60" />
+      </div>
+    )
+  }
+  return <img src={src || "/placeholder.svg"} alt={alt} className={className} onError={() => setErr(true)} />
+}
 
 const BeachesMap = dynamic(() => import("@/components/beaches-map"), {
   ssr: false,
@@ -186,17 +199,11 @@ export default function PlayasPage() {
               onClick={() => handleBeachSelect(beach)}
             >
               <div className="flex gap-3">
-                {beach.image_url && (
-                  <img
-                    src={beach.image_url || "/placeholder.svg"}
-                    alt={beach.name}
-                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null
-                      e.currentTarget.src = "/placeholder.svg"
-                    }}
-                  />
-                )}
+                <BeachImage
+                  src={beach.image_url}
+                  alt={beach.name}
+                  className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm line-clamp-2">{beach.name}</h3>
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-1 flex items-center gap-1">
@@ -227,15 +234,7 @@ export default function PlayasPage() {
           {selectedBeach && (
             <div className="relative">
               <div className="relative h-40 w-full">
-                <img
-                  src={selectedBeach.image_url || "/placeholder.svg?height=160&width=400"}
-                  alt={selectedBeach.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null
-                    e.currentTarget.src = "/placeholder.svg?height=160&width=400"
-                  }}
-                />
+                <BeachImage src={selectedBeach.image_url} alt={selectedBeach.name} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
                 <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">

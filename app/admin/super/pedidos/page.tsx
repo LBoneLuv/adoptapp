@@ -68,9 +68,12 @@ export default function SuperPedidosPage() {
   }, [])
 
   async function changeStatus(id: string, status: string) {
-    const supabase = createClient()
-    const { error } = await supabase.from("orders").update({ status }).eq("id", id)
-    if (error) {
+    const res = await fetch("/api/admin/order-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: id, status }),
+    })
+    if (!res.ok) {
       alert("Error al actualizar el estado")
       return
     }
@@ -169,6 +172,13 @@ export default function SuperPedidosPage() {
                     ))}
                   </select>
                 </div>
+
+                <Link
+                  href={`/admin/super/pedidos/${order.id}`}
+                  className="block text-center text-sm text-[#6750A4] font-medium mt-3 pt-3 border-t border-[#E8DEF8]"
+                >
+                  Ver detalle completo →
+                </Link>
               </div>
             )
           })

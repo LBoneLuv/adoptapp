@@ -3,6 +3,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { NextResponse, type NextRequest } from "next/server"
 import Stripe from "stripe"
 import { validateCoupon, type CouponRow } from "@/lib/coupon"
+import { sendEmail, orderConfirmationHtml } from "@/lib/email"
 
 interface CartProduct {
   id: string
@@ -118,6 +119,20 @@ export async function POST(request: NextRequest) {
     if (!stripeKey) {
       // Modo manual: el pedido queda como 'pending' y se gestiona a mano.
       console.warn("[v0] STRIPE_SECRET_KEY no configurada — pedido creado en modo manual")
+      if (shipping.email) {
+        await sendEmail({
+          to: shipping.email,
+          subject: "Confirmación de tu pedido",
+          html: orderConfirmationHtml({
+            orderId: order.id,
+            name: shipping.name,
+            items: lines.map((l) => ({ product_name: l.product!.name, quantity: l.quantity, unit_price: l.product!.price })),
+            total,
+            discount,
+            couponCode: appliedCode,
+          }),
+        })
+      }
       return NextResponse.json({ url: null, orderId: order.id, manual: true })
     }
 

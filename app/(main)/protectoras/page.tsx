@@ -57,13 +57,14 @@ export default function ProtectorasPage() {
       {/* Shelter Grid */}
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
-                <div className="w-full h-32 bg-gray-200" />
-                <div className="p-3 space-y-2">
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-3xl p-3 flex gap-3 animate-pulse">
+                <div className="w-24 h-24 bg-gray-200 rounded-2xl flex-shrink-0" />
+                <div className="flex-1 space-y-2 py-2">
                   <div className="h-4 bg-gray-200 rounded w-3/4" />
                   <div className="h-3 bg-gray-200 rounded w-1/2" />
+                  <div className="h-3 bg-gray-200 rounded w-2/3" />
                 </div>
               </div>
             ))}
@@ -80,7 +81,7 @@ export default function ProtectorasPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-3">
             {filteredShelters?.map((shelter: any) => (
               <ShelterCard key={shelter.id} shelter={shelter} />
             ))}
