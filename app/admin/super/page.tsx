@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { Building2, Stethoscope, ShoppingBag, Home, ChevronRight, Package, Ticket, MessageSquare } from "lucide-react"
+import { Building2, Stethoscope, ShoppingBag, Home, ChevronRight, Package, Ticket, MessageSquare, BarChart3 } from "lucide-react"
 
 export default function SuperAdminHubPage() {
   const router = useRouter()
@@ -59,6 +59,7 @@ export default function SuperAdminHubPage() {
   if (!allowed) return null
 
   const sections = [
+    { href: "/admin/super/analiticas", label: "Analíticas", desc: "Ingresos, pedidos y métricas de la app", icon: BarChart3, badge: 0 },
     { href: "/admin/super/protectoras", label: "Protectoras", desc: "Aprobar registros pendientes", icon: Building2, badge: pending.shelters },
     { href: "/admin/super/profesionales", label: "Profesionales", desc: "Veterinarios, adiestradores, paseadores, residencias", icon: Stethoscope, badge: pending.professionals },
     { href: "/admin/super/tienda", label: "Tienda", desc: "Productos, categorías y banners", icon: ShoppingBag, badge: 0 },

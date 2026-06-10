@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, MapPin, Calendar, Tag, Check, X, ChevronRight, Ruler, Heart, XIcon } from "lucide-react"
+import { ArrowLeft, MapPin, Calendar, Tag, Check, X, ChevronRight, Ruler, Heart, XIcon, Share2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import Image from "next/image"
 import Link from "next/link"
@@ -118,6 +118,19 @@ function PetDetailPageClient({ animalId }: { animalId: string }) {
     }
   }
 
+  async function share() {
+    const url = typeof window !== "undefined" ? window.location.href : ""
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: animal?.name, text: `Mira a ${animal?.name} en adopción`, url })
+      } catch {
+        /* cancelado */
+      }
+    } else {
+      await navigator.clipboard.writeText(url)
+    }
+  }
+
   const openLightbox = (index: number) => {
     setCurrentImageIndex(index)
     setLightboxOpen(true)
@@ -183,31 +196,70 @@ function PetDetailPageClient({ animalId }: { animalId: string }) {
 
       {/* Content */}
       <div className="pt-16 pb-24">
-        {/* Image Display with Favorite Button */}
+        {/* Image gallery */}
         <div className="relative bg-[#FFFBFE]">
-          <div className="relative h-80 w-full bg-[#E7E0EC] cursor-pointer" onClick={() => openLightbox(0)}>
-            <Image src={firstImage || "/placeholder.svg"} alt={animal.name} fill className="object-cover" />
+          <div className="relative h-80 w-full bg-[#E7E0EC] cursor-zoom-in" onClick={() => openLightbox(currentImageIndex)}>
+            <Image
+              src={(images[currentImageIndex] || firstImage) || "/placeholder.svg"}
+              alt={animal.name}
+              fill
+              className="object-cover"
+            />
 
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                toggleFavorite()
-              }}
-              className="absolute top-4 right-4 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors z-10"
-            >
-              <Heart className={`w-6 h-6 ${isFavorite ? "fill-[#BA1A1A] text-[#BA1A1A]" : "text-[#1C1B1F]"}`} />
-            </button>
+            {images.length > 1 && (
+              <span className="absolute top-4 left-4 bg-black/50 text-white text-xs font-medium px-2.5 py-1 rounded-full">
+                {currentImageIndex + 1}/{images.length}
+              </span>
+            )}
+
+            <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toggleFavorite()
+                }}
+                className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors"
+              >
+                <Heart className={`w-6 h-6 ${isFavorite ? "fill-[#BA1A1A] text-[#BA1A1A]" : "text-[#1C1B1F]"}`} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  share()
+                }}
+                className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors"
+              >
+                <Share2 className="w-5 h-5 text-[#1C1B1F]" />
+              </button>
+            </div>
+
+            {images.length > 1 && (
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+                {images.map((_: string, index: number) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setCurrentImageIndex(index)
+                    }}
+                    className={`h-2 rounded-full transition-all ${index === currentImageIndex ? "bg-[#6750A4] w-8" : "bg-[#6750A4]/40 w-2"}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Image indicators if multiple images */}
+          {/* Thumbnail strip */}
           {images.length > 1 && (
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-              {images.map((_: string, index: number) => (
-                <div
+            <div className="flex gap-2 px-4 py-3 overflow-x-auto">
+              {images.map((img: string, index: number) => (
+                <button
                   key={index}
-                  className={`h-2 rounded-full cursor-pointer ${index === 0 ? "bg-[#6750A4] w-8" : "bg-[#6750A4]/40 w-2"}`}
-                  onClick={() => openLightbox(index)}
-                />
+                  onClick={() => setCurrentImageIndex(index)}
+                  className={`w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border-2 ${index === currentImageIndex ? "border-[#6750A4]" : "border-transparent"}`}
+                >
+                  <img src={img || "/placeholder.svg"} alt={`${animal.name} ${index + 1}`} className="w-full h-full object-cover" />
+                </button>
               ))}
             </div>
           )}
@@ -257,27 +309,24 @@ function PetDetailPageClient({ animalId }: { animalId: string }) {
         {(animal.active_level !== null || animal.affectionate_level !== null || animal.sociable_level !== null) && (
           <div className="px-4 py-6 bg-[#FFFBFE] shadow-sm mt-2">
             <h3 className="font-bold text-[#1C1B1F] mb-4 text-base">Personalidad</h3>
-            <div className="flex gap-4">
-              {animal.active_level !== null && (
-                <div className="flex flex-col items-center gap-2 flex-1 p-4 rounded-2xl bg-[#E8DEF8] border-2 border-[#6750A4]">
-                  <div className="font-bold text-[#6750A4] text-xl">{animal.active_level}/10</div>
-                  <span className="font-medium text-xs text-[#6750A4] text-center">Activo</span>
-                </div>
-              )}
-
-              {animal.affectionate_level !== null && (
-                <div className="flex flex-col items-center gap-2 flex-1 p-4 rounded-2xl bg-[#E8DEF8] border-2 border-[#6750A4]">
-                  <div className="font-bold text-[#6750A4] text-xl">{animal.affectionate_level}/10</div>
-                  <span className="font-medium text-xs text-[#6750A4] text-center">Cariñoso</span>
-                </div>
-              )}
-
-              {animal.sociable_level !== null && (
-                <div className="flex flex-col items-center gap-2 flex-1 p-4 rounded-2xl bg-[#E8DEF8] border-2 border-[#6750A4]">
-                  <div className="font-bold text-[#6750A4] text-xl">{animal.sociable_level}/10</div>
-                  <span className="font-medium text-xs text-[#6750A4] text-center">Sociable</span>
-                </div>
-              )}
+            <div className="space-y-4">
+              {[
+                { label: "Activo", value: animal.active_level },
+                { label: "Cariñoso", value: animal.affectionate_level },
+                { label: "Sociable", value: animal.sociable_level },
+              ]
+                .filter((p) => p.value !== null && p.value !== undefined)
+                .map((p) => (
+                  <div key={p.label}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-[#1C1B1F] font-medium">{p.label}</span>
+                      <span className="text-[#6750A4] font-semibold">{p.value}/10</span>
+                    </div>
+                    <div className="h-2.5 bg-[#E8DEF8] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#6750A4] rounded-full transition-all" style={{ width: `${(p.value as number) * 10}%` }} />
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         )}

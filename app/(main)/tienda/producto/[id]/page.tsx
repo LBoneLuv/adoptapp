@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Minus, Plus, ShoppingCart, Check, Heart, Share2, Truck, RotateCcw, ShieldCheck, Star } from "lucide-react"
+import { Minus, Plus, ShoppingCart, Check, Heart, Share2, Truck, RotateCcw, ShieldCheck, Star, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { ProductCard, type ProductCardData } from "@/components/product-card"
 import { ProductReviews } from "@/components/product-reviews"
 import { addRecentlyViewed } from "@/lib/recently-viewed"
@@ -36,6 +36,7 @@ export default function ProductoPage() {
   const [added, setAdded] = useState(false)
   const [activeImg, setActiveImg] = useState(0)
   const [isFav, setIsFav] = useState(false)
+  const [lightbox, setLightbox] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -161,7 +162,17 @@ export default function ProductoPage() {
     <div className="min-h-screen bg-[#FEF7FF] pb-28">
       {/* Gallery */}
       <div className="relative bg-white">
-        <img src={gallery[activeImg] || "/placeholder.svg"} alt={product.name} className="w-full h-72 object-cover" />
+        <img
+          src={gallery[activeImg] || "/placeholder.svg"}
+          alt={product.name}
+          className="w-full h-72 object-cover cursor-zoom-in"
+          onClick={() => setLightbox(true)}
+        />
+        {gallery.length > 1 && (
+          <span className="absolute bottom-3 left-3 bg-black/50 text-white text-xs font-medium px-2.5 py-1 rounded-full">
+            {activeImg + 1}/{gallery.length}
+          </span>
+        )}
         <div className="absolute top-3 right-3 flex flex-col gap-2">
           <button onClick={toggleFav} className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow" aria-label="Favorito">
             <Heart className={`w-5 h-5 ${isFav ? "fill-[#D32F2F] text-[#D32F2F]" : "text-[#6750A4]"}`} />
@@ -279,6 +290,38 @@ export default function ProductoPage() {
           </div>
         )}
       </div>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div className="fixed inset-0 bg-black/95 z-[2100] flex items-center justify-center" onClick={() => setLightbox(false)}>
+          <button onClick={() => setLightbox(false)} className="absolute top-4 right-4 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
+            <X className="w-6 h-6 text-white" />
+          </button>
+          {gallery.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setActiveImg((i) => (i - 1 + gallery.length) % gallery.length)
+              }}
+              className="absolute left-4 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center"
+            >
+              <ChevronLeft className="w-7 h-7 text-white" />
+            </button>
+          )}
+          <img src={gallery[activeImg] || "/placeholder.svg"} alt={product.name} className="max-w-full max-h-full object-contain p-4" />
+          {gallery.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setActiveImg((i) => (i + 1) % gallery.length)
+              }}
+              className="absolute right-4 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center"
+            >
+              <ChevronRight className="w-7 h-7 text-white" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Add to cart bar */}
       <div className="fixed bottom-16 left-0 right-0 px-4 py-3 bg-[#FFFBFE] shadow-[0_-2px_8px_rgba(0,0,0,0.1)] z-[1998]">
