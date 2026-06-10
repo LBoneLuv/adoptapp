@@ -14,7 +14,8 @@ export async function GET() {
 
     return NextResponse.json(shelters || [], {
       headers: {
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        // Sin caché de CDN: las aprobaciones deben verse al instante.
+        "Cache-Control": "no-store, max-age=0",
       },
     })
   } catch (error) {

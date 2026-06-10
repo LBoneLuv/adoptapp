@@ -23,10 +23,9 @@ export function ProfessionalsDirectory({ config }: ProfessionalsDirectoryProps) 
     `/api/professionals?type=${config.type}`,
     fetcher,
     {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 300000,
-      refreshInterval: 300000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 3000,
       keepPreviousData: true,
     },
   )

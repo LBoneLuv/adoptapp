@@ -15,10 +15,9 @@ export default function ProtectorasPage() {
   const [openSheet, setOpenSheet] = useState(false)
 
   const { data: shelters, isLoading } = useSWR("/api/shelters", fetcher, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-    dedupingInterval: 300000,
-    refreshInterval: 300000,
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    dedupingInterval: 3000,
     keepPreviousData: true,
   })
 

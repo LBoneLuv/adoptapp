@@ -96,7 +96,7 @@ export default function SuperProtectorasPage() {
     <div className="min-h-screen bg-[#FEF7FF] pb-24">
       <header className="px-4 py-4 bg-[#FFFBFE] shadow-sm sticky top-0 z-10 flex items-center justify-between">
         <h1 className="font-bold text-[#1C1B1F] text-lg">Protectoras</h1>
-        <Link href="/adopta" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#E8DEF8]">
+        <Link href="/principal" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#E8DEF8]">
           <Home className="w-5 h-5 text-[#6750A4]" />
         </Link>
       </header>
