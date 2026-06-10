@@ -1,10 +1,24 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { Plus, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+
+const fetchMyPets = async () => {
+  const supabase = createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return []
+  const { data } = await supabase
+    .from("user_pets")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+  return data || []
+}
 
 function calculateAge(birthDate: string): string {
   const today = new Date()
@@ -21,39 +35,11 @@ function calculateAge(birthDate: string): string {
 }
 
 export default function MisAnimalesPage() {
-  const [myPets, setMyPets] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    loadMyPets()
-  }, [])
-
-  const loadMyPets = async () => {
-    try {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        setIsLoading(false)
-        return
-      }
-
-      const { data, error } = await supabase
-        .from("user_pets")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-
-      if (error) throw error
-      setMyPets(data || [])
-    } catch (error) {
-      console.error("Error loading pets:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const { data: myPets = [], isLoading } = useSWR("my-pets", fetchMyPets, {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
+    keepPreviousData: true,
+  })
 
   return (
     <div className="flex flex-col h-full bg-[#FEF7FF]">

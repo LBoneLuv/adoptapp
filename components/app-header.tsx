@@ -1,11 +1,25 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import useSWR from "swr"
 import { useEffect, useState } from "react"
-import { MessageCircle, Heart, LayoutDashboard } from "lucide-react"
+import { MessageCircle, Heart, LayoutDashboard, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+
+// Páginas "raíz" (pestañas / accesos directos): NO muestran botón de volver.
+const ROOT_PATHS = [
+  "/principal",
+  "/servicios",
+  "/mis-animales",
+  "/tienda",
+  "/favoritos",
+  "/chats",
+  "/comunidad",
+  "/avisos",
+  "/adopta",
+  "/protectoras",
+]
 
 const fetcher = async (url: string) => {
   const res = await fetch(url)
@@ -15,6 +29,8 @@ const fetcher = async (url: string) => {
 
 export function AppHeader() {
   const pathname = usePathname()
+  const router = useRouter()
+  const isSubPage = !!pathname && !ROOT_PATHS.includes(pathname)
   const { data: user } = useSWR("/api/user", fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
@@ -95,6 +111,10 @@ export function AppHeader() {
     if (pathname?.startsWith("/servicios/residencias")) return "Residencias"
     if (pathname?.startsWith("/servicios/playas")) return "Playas perrunas"
     if (pathname?.startsWith("/servicios")) return "Servicios"
+    if (pathname?.startsWith("/tienda/carrito")) return "Carrito"
+    if (pathname?.startsWith("/tienda/producto")) return "Producto"
+    if (pathname?.startsWith("/tienda/categoria")) return "Categoría"
+    if (pathname?.startsWith("/tienda/buscar")) return "Buscar"
     if (pathname?.startsWith("/favoritos")) return "Favoritos"
     if (pathname?.startsWith("/mis-animales")) return "Mis animales"
     if (pathname?.startsWith("/adopta")) return "Adoptar"
@@ -107,16 +127,25 @@ export function AppHeader() {
 
   return (
     <header className="flex items-center justify-between px-4 py-4 bg-[#FFFBFE] shadow-sm flex-shrink-0">
-      <Link href="/principal" className="flex items-center gap-2">
-        {pathname?.startsWith("/principal") ? (
-          <img src="/arko-header-logo.svg" alt="Arko" className="w-auto h-10" />
-        ) : (
-          <>
-            <img src="/arko-logo.svg" alt="Arko" className="w-10 h-10" />
-            <h1 className="text-xl font-bold text-[#1C1B1F]">{getPageTitle()}</h1>
-          </>
-        )}
-      </Link>
+      {isSubPage ? (
+        <button onClick={() => router.back()} className="flex items-center gap-2 -ml-1">
+          <span className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-[#E8DEF8] transition-colors">
+            <ArrowLeft className="w-6 h-6 text-[#1C1B1F]" />
+          </span>
+          <h1 className="text-xl font-bold text-[#1C1B1F]">{getPageTitle()}</h1>
+        </button>
+      ) : (
+        <Link href="/principal" className="flex items-center gap-2">
+          {pathname?.startsWith("/principal") ? (
+            <img src="/arko-header-logo.svg" alt="Arko" className="w-auto h-10" />
+          ) : (
+            <>
+              <img src="/arko-logo.svg" alt="Arko" className="w-10 h-10" />
+              <h1 className="text-xl font-bold text-[#1C1B1F]">{getPageTitle()}</h1>
+            </>
+          )}
+        </Link>
+      )}
       <div className="flex items-center gap-3">
         {mounted && adminTarget && (
           <Link

@@ -177,13 +177,6 @@ export default function CarritoPage() {
 
   return (
     <div className="flex flex-col h-full bg-[#FEF7FF]">
-      <header className="px-4 py-4 bg-[#FFFBFE] shadow-sm flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-5 w-5 text-[#6750A4]" />
-        </Button>
-        <h1 className="font-bold text-[#1C1B1F] text-base">Mi carrito</h1>
-      </header>
-
       {lines.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
           <div className="w-16 h-16 rounded-full bg-[#E8DEF8] flex items-center justify-center mb-4">

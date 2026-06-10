@@ -42,12 +42,11 @@ export default function CategoriaPage() {
   return (
     <div className="flex flex-col h-full bg-[#FEF7FF]">
       <ShopCartButton />
-      <header className="px-4 py-4 bg-[#FFFBFE] shadow-sm flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-5 w-5 text-[#6750A4]" />
-        </Button>
-        <h1 className="font-bold text-[#1C1B1F] text-base">{categoryName || "Categoría"}</h1>
-      </header>
+      {categoryName && (
+        <div className="px-4 pt-4">
+          <h2 className="font-bold text-[#1C1B1F] text-lg">{categoryName}</h2>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-24">
         {loading ? (

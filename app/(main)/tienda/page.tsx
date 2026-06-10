@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
+import useSWR from "swr"
 import { Filter, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -32,20 +33,38 @@ interface Banner {
   title: string
 }
 
+const fetchShopHome = async () => {
+  const supabase = createClient()
+  const [categoriesRes, featuredRes, newRes, bannersRes] = await Promise.all([
+    supabase.from("shop_categories").select("*").order("name"),
+    supabase.from("shop_products").select("*").eq("featured", true).limit(6),
+    supabase.from("shop_products").select("*").eq("is_new", true).limit(6),
+    supabase.from("shop_banners").select("*").eq("active", true).order("order_index"),
+  ])
+  return {
+    categories: (categoriesRes.data as Category[]) || [],
+    featured: (featuredRes.data as Product[]) || [],
+    isNew: (newRes.data as Product[]) || [],
+    banners: (bannersRes.data as Banner[]) || [],
+  }
+}
+
 export default function TiendaPage() {
-  const [categories, setCategories] = useState<Category[]>([])
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
-  const [newProducts, setNewProducts] = useState<Product[]>([])
-  const [banners, setBanners] = useState<Banner[]>([])
+  const { data: shopData } = useSWR("tienda-home", fetchShopHome, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+    keepPreviousData: true,
+  })
+  const categories = shopData?.categories || []
+  const featuredProducts = shopData?.featured || []
+  const newProducts = shopData?.isNew || []
+  const banners = shopData?.banners || []
+
   const [currentBanner, setCurrentBanner] = useState(0)
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [searchModalOpen, setSearchModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<Product[]>([])
-
-  useEffect(() => {
-    loadData()
-  }, [])
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -63,22 +82,6 @@ export default function TiendaPage() {
       return () => clearInterval(interval)
     }
   }, [banners])
-
-  const loadData = async () => {
-    const supabase = createClient()
-
-    const [categoriesRes, featuredRes, newRes, bannersRes] = await Promise.all([
-      supabase.from("shop_categories").select("*").order("name"),
-      supabase.from("shop_products").select("*").eq("featured", true).limit(6),
-      supabase.from("shop_products").select("*").eq("is_new", true).limit(6),
-      supabase.from("shop_banners").select("*").eq("active", true).order("order_index"),
-    ])
-
-    if (categoriesRes.data) setCategories(categoriesRes.data)
-    if (featuredRes.data) setFeaturedProducts(featuredRes.data)
-    if (newRes.data) setNewProducts(newRes.data)
-    if (bannersRes.data) setBanners(bannersRes.data)
-  }
 
   const searchProducts = async (query: string) => {
     const supabase = createClient()

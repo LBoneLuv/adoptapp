@@ -108,14 +108,6 @@ export default function ProductoPage() {
   return (
     <div className="min-h-screen bg-[#FEF7FF] pb-28">
       <div className="relative">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
         <img
           src={product.image_url || "/placeholder.svg"}
           alt={product.name}
