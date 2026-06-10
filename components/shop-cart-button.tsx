@@ -11,6 +11,9 @@ export function ShopCartButton() {
 
   useEffect(() => {
     loadCartCount()
+    const onUpdate = () => loadCartCount()
+    window.addEventListener("cart-updated", onUpdate)
+    return () => window.removeEventListener("cart-updated", onUpdate)
   }, [])
 
   const loadCartCount = async () => {

@@ -1,26 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
-import Link from "next/link"
+import { useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ArrowLeft } from "lucide-react"
 import { ShopCartButton } from "@/components/shop-cart-button"
-
-interface Product {
-  id: string
-  name: string
-  price: number
-  image_url: string | null
-}
+import { ProductCard, type ProductCardData } from "@/components/product-card"
 
 export default function CategoriaPage() {
   const params = useParams()
-  const router = useRouter()
   const id = params?.id as string
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<ProductCardData[]>([])
   const [categoryName, setCategoryName] = useState("")
   const [loading, setLoading] = useState(true)
 
@@ -30,10 +19,14 @@ export default function CategoriaPage() {
     async function load() {
       const [{ data: cat }, { data: prods }] = await Promise.all([
         supabase.from("shop_categories").select("name").eq("id", id).maybeSingle(),
-        supabase.from("shop_products").select("id, name, price, image_url").eq("category_id", id).order("name"),
+        supabase
+          .from("shop_products")
+          .select("id, name, price, compare_at_price, image_url, stock, is_new, rating")
+          .eq("category_id", id)
+          .order("name"),
       ])
       if (cat) setCategoryName(cat.name)
-      setProducts(prods || [])
+      setProducts((prods as ProductCardData[]) || [])
       setLoading(false)
     }
     load()
@@ -60,21 +53,7 @@ export default function CategoriaPage() {
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {products.map((product) => (
-              <Link key={product.id} href={`/tienda/producto/${product.id}`}>
-                <Card className="border-0 shadow-md overflow-hidden hover:shadow-lg transition-shadow h-[260px] flex flex-col">
-                  <img
-                    src={product.image_url || "/placeholder.svg"}
-                    alt={product.name}
-                    className="w-full h-40 object-cover mt-[-25px]"
-                  />
-                  <div className="p-3 flex-1 flex flex-col mt-[-20px]">
-                    <h3 className="font-medium text-sm mb-1 line-clamp-2 overflow-hidden text-ellipsis">
-                      {product.name}
-                    </h3>
-                    <p className="font-bold text-[#6750A4] mt-auto text-base">{product.price.toFixed(2)}€</p>
-                  </div>
-                </Card>
-              </Link>
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         )}

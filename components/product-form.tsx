@@ -6,13 +6,17 @@ import { useRouter } from "next/navigation"
 import { Camera } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
+import { DocUpload } from "@/components/doc-upload"
+import { RichTextEditor } from "@/components/rich-text-editor"
 
 export interface ProductRecord {
   id: string
   name: string
   description: string | null
   price: number
+  compare_at_price: number | null
   image_url: string | null
+  gallery_images: string[] | null
   category_id: string | null
   stock: number
   featured: boolean
@@ -47,7 +51,11 @@ export function ProductForm({ initial }: { initial?: ProductRecord | null }) {
   const [name, setName] = useState(initial?.name || "")
   const [description, setDescription] = useState(initial?.description || "")
   const [price, setPrice] = useState(initial?.price != null ? String(initial.price) : "")
+  const [compareAtPrice, setCompareAtPrice] = useState(
+    initial?.compare_at_price != null ? String(initial.compare_at_price) : "",
+  )
   const [imageUrl, setImageUrl] = useState(initial?.image_url || "")
+  const [gallery, setGallery] = useState<string[]>(initial?.gallery_images || [])
   const [categoryId, setCategoryId] = useState(initial?.category_id || "")
   const [stock, setStock] = useState(initial?.stock != null ? String(initial.stock) : "0")
   const [featured, setFeatured] = useState(initial?.featured || false)
@@ -88,7 +96,9 @@ export function ProductForm({ initial }: { initial?: ProductRecord | null }) {
       name,
       description: description || null,
       price: Number.parseFloat(price),
+      compare_at_price: compareAtPrice ? Number.parseFloat(compareAtPrice) : null,
       image_url: imageUrl || null,
+      gallery_images: gallery,
       category_id: categoryId || null,
       stock: Number.parseInt(stock || "0", 10),
       featured,
@@ -126,13 +136,25 @@ export function ProductForm({ initial }: { initial?: ProductRecord | null }) {
       </div>
 
       <div>
+        <label className={labelCls}>Galería de fotos</label>
+        <DocUpload
+          value={gallery}
+          onChange={(urls) => setGallery(urls as string[])}
+          multiple
+          accept="image/*"
+          label="Añadir fotos a la galería"
+          hint="Se muestran en la ficha del producto"
+        />
+      </div>
+
+      <div>
         <label className={labelCls}>Nombre *</label>
         <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="Ej: Pienso Premium" />
       </div>
 
       <div>
-        <label className={labelCls}>Descripción (admite HTML)</label>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className={`${inputCls} resize-none`} />
+        <label className={labelCls}>Descripción</label>
+        <RichTextEditor value={description} onChange={setDescription} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -141,9 +163,14 @@ export function ProductForm({ initial }: { initial?: ProductRecord | null }) {
           <input type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className={inputCls} placeholder="0.00" />
         </div>
         <div>
-          <label className={labelCls}>Stock</label>
-          <input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
+          <label className={labelCls}>Precio anterior (oferta)</label>
+          <input type="number" min="0" step="0.01" value={compareAtPrice} onChange={(e) => setCompareAtPrice(e.target.value)} className={inputCls} placeholder="Opcional" />
         </div>
+      </div>
+
+      <div>
+        <label className={labelCls}>Stock</label>
+        <input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
       </div>
 
       <div>
