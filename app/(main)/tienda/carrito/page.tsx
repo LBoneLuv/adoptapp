@@ -12,7 +12,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, Check } from "lucide-react"
+import { Minus, Plus, Trash2, ShoppingBag, Check, Ticket } from "lucide-react"
+import { validateCoupon, type CouponRow } from "@/lib/coupon"
 
 interface CartLine {
   id: string
@@ -46,6 +47,10 @@ export default function CarritoPage() {
     city: "",
     postal_code: "",
   })
+
+  const [couponInput, setCouponInput] = useState("")
+  const [coupon, setCoupon] = useState<CouponRow | null>(null)
+  const [couponMsg, setCouponMsg] = useState<{ text: string; ok: boolean } | null>(null)
 
   useEffect(() => {
     load()
@@ -102,7 +107,24 @@ export default function CarritoPage() {
     await supabase.from("cart_items").delete().eq("id", id)
   }
 
-  const total = lines.reduce((sum, l) => sum + (l.product ? l.product.price * l.quantity : 0), 0)
+  const subtotal = lines.reduce((sum, l) => sum + (l.product ? l.product.price * l.quantity : 0), 0)
+  const discount = coupon ? validateCoupon(coupon, subtotal).discount : 0
+  const total = Math.max(0, subtotal - discount)
+
+  async function applyCoupon() {
+    const code = couponInput.trim().toUpperCase()
+    if (!code) return
+    const supabase = createClient()
+    const { data } = await supabase.from("coupons").select("*").eq("code", code).maybeSingle()
+    const result = validateCoupon(data as CouponRow | null, subtotal)
+    if (result.ok) {
+      setCoupon(data as CouponRow)
+      setCouponMsg({ text: `Cupón aplicado: −${result.discount.toFixed(2)}€`, ok: true })
+    } else {
+      setCoupon(null)
+      setCouponMsg({ text: result.reason || "Cupón no válido", ok: false })
+    }
+  }
 
   async function checkout() {
     if (!ship.name || !ship.email || !ship.address || !ship.city || !ship.postal_code) {
@@ -131,7 +153,7 @@ export default function CarritoPage() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shipping: ship }),
+        body: JSON.stringify({ shipping: ship, couponCode: coupon?.code || null }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Error al iniciar el pago")
@@ -230,10 +252,43 @@ export default function CarritoPage() {
                 </div>
               </div>
             ))}
+
+            {/* Cupón */}
+            <div className="bg-[#FFFBFE] rounded-3xl p-4 shadow-md">
+              <p className="text-sm font-medium text-[#49454F] mb-2 flex items-center gap-2">
+                <Ticket className="w-4 h-4 text-[#6750A4]" /> ¿Tienes un cupón?
+              </p>
+              <div className="flex gap-2">
+                <input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  placeholder="CÓDIGO"
+                  className={`${inputCls} uppercase`}
+                />
+                <Button onClick={applyCoupon} className="bg-[#6750A4] hover:bg-[#7965AF] text-white rounded-2xl px-5">
+                  Aplicar
+                </Button>
+              </div>
+              {couponMsg && (
+                <p className={`text-xs mt-2 ${couponMsg.ok ? "text-[#1E7E34]" : "text-[#C5221F]"}`}>{couponMsg.text}</p>
+              )}
+            </div>
           </div>
 
           {/* Total + checkout */}
           <div className="fixed bottom-16 left-0 right-0 px-4 py-3 bg-[#FFFBFE] shadow-[0_-2px_8px_rgba(0,0,0,0.1)] z-[1998]">
+            {discount > 0 && (
+              <>
+                <div className="flex items-center justify-between text-sm text-[#49454F]">
+                  <span>Subtotal</span>
+                  <span>{subtotal.toFixed(2)}€</span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-[#1E7E34] mb-1">
+                  <span>Descuento</span>
+                  <span>−{discount.toFixed(2)}€</span>
+                </div>
+              </>
+            )}
             <div className="flex items-center justify-between mb-2">
               <span className="text-[#49454F]">Total</span>
               <span className="text-xl font-bold text-[#1C1B1F]">{total.toFixed(2)}€</span>
@@ -264,6 +319,12 @@ export default function CarritoPage() {
               <input className={inputCls} placeholder="Ciudad" value={ship.city} onChange={(e) => setShip({ ...ship, city: e.target.value })} />
               <input className={inputCls} placeholder="Código postal" value={ship.postal_code} onChange={(e) => setShip({ ...ship, postal_code: e.target.value })} />
             </div>
+            {discount > 0 && (
+              <div className="flex items-center justify-between text-sm text-[#1E7E34] pt-1">
+                <span>Descuento ({coupon?.code})</span>
+                <span>−{discount.toFixed(2)}€</span>
+              </div>
+            )}
             <div className="flex items-center justify-between pt-2">
               <span className="text-[#49454F]">Total a pagar</span>
               <span className="text-xl font-bold text-[#1C1B1F]">{total.toFixed(2)}€</span>

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Camera, LogOut } from "lucide-react"
+import { Camera, LogOut, Package, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
@@ -305,11 +305,26 @@ export default function PerfilPage() {
             </div>
           </div>
 
+          {/* Mis pedidos */}
+          <Link
+            href="/tienda/pedidos"
+            className="flex items-center gap-3 mt-8 bg-[#FFFBFE] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="w-10 h-10 rounded-full bg-[#E8DEF8] flex items-center justify-center flex-shrink-0">
+              <Package className="w-5 h-5 text-[#6750A4]" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-[#1C1B1F] text-sm">Mis pedidos</p>
+              <p className="text-xs text-[#79747E]">Consulta el estado de tus compras</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-[#79747E]" />
+          </Link>
+
           {/* Save Button */}
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="w-full mt-8 bg-[#6750A4] hover:bg-[#7965AF] text-white rounded-full h-14 text-base font-semibold shadow-lg"
+            className="w-full mt-4 bg-[#6750A4] hover:bg-[#7965AF] text-white rounded-full h-14 text-base font-semibold shadow-lg"
           >
             {saving ? "Guardando..." : "Guardar Cambios"}
           </Button>

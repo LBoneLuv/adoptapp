@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Minus, Plus, ShoppingCart, Check, Heart, Share2, Truck, RotateCcw, ShieldCheck, Star } from "lucide-react"
 import { ProductCard, type ProductCardData } from "@/components/product-card"
 import { ProductReviews } from "@/components/product-reviews"
+import { addRecentlyViewed } from "@/lib/recently-viewed"
 
 interface Product {
   id: string
@@ -38,6 +39,7 @@ export default function ProductoPage() {
 
   useEffect(() => {
     if (!id) return
+    addRecentlyViewed(id)
     const supabase = createClient()
     async function load() {
       const { data } = await supabase.from("shop_products").select("*").eq("id", id).single()

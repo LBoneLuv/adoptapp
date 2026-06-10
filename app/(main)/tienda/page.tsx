@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
 import { ShopCartButton } from "@/components/shop-cart-button"
 import { ProductCard, type ProductCardData } from "@/components/product-card"
+import { getRecentlyViewed } from "@/lib/recently-viewed"
 
 interface Category {
   id: string
@@ -60,6 +61,22 @@ export default function TiendaPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [liveResults, setLiveResults] = useState<ProductCardData[]>([])
   const [searching, setSearching] = useState(false)
+  const [recentProducts, setRecentProducts] = useState<ProductCardData[]>([])
+
+  // Vistos recientemente (localStorage)
+  useEffect(() => {
+    const ids = getRecentlyViewed()
+    if (ids.length === 0) return
+    const supabase = createClient()
+    supabase
+      .from("shop_products")
+      .select("id, name, price, compare_at_price, image_url, stock, is_new, rating")
+      .in("id", ids)
+      .then(({ data }) => {
+        const map = new Map((data || []).map((p: any) => [p.id, p]))
+        setRecentProducts(ids.map((i) => map.get(i)).filter(Boolean) as ProductCardData[])
+      })
+  }, [])
 
   // Búsqueda en tiempo real (debounce)
   useEffect(() => {
@@ -224,6 +241,20 @@ export default function TiendaPage() {
                 <div className="grid grid-cols-2 gap-3">
                   {newProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Vistos recientemente */}
+            {recentProducts.length > 0 && (
+              <div className="mb-6">
+                <h2 className="font-bold text-[#1C1B1F] text-lg px-4 mb-3">Vistos recientemente</h2>
+                <div className="flex gap-3 overflow-x-auto px-4 pb-1">
+                  {recentProducts.map((p) => (
+                    <div key={p.id} className="w-40 flex-shrink-0">
+                      <ProductCard product={p} />
+                    </div>
                   ))}
                 </div>
               </div>

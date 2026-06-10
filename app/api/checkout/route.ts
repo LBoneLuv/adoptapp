@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
+import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { NextResponse, type NextRequest } from "next/server"
 import Stripe from "stripe"
+import { validateCoupon, type CouponRow } from "@/lib/coupon"
 
 interface CartProduct {
   id: string
@@ -25,6 +27,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const shipping = body?.shipping || {}
+    const couponCode = body?.couponCode
 
     // Cargar el carrito desde el servidor (no confiamos en el cliente para los precios)
     const { data: cart } = await supabase
@@ -37,7 +40,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "El carrito está vacío" }, { status: 400 })
     }
 
-    const total = lines.reduce((sum, l) => sum + (l.product!.price || 0) * l.quantity, 0)
+    const subtotal = lines.reduce((sum, l) => sum + (l.product!.price || 0) * l.quantity, 0)
+
+    // Validar el cupón en el servidor (no confiamos en el cliente)
+    let discount = 0
+    let appliedCode: string | null = null
+    let appliedCoupon: CouponRow | null = null
+    if (couponCode) {
+      const { data: c } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("code", String(couponCode).toUpperCase())
+        .maybeSingle()
+      const r = validateCoupon(c as CouponRow | null, subtotal)
+      if (r.ok && c) {
+        discount = r.discount
+        appliedCode = (c as CouponRow).code
+        appliedCoupon = c as CouponRow
+      }
+    }
+    const total = Math.max(0, subtotal - discount)
 
     // 1) Crear el pedido (pendiente) + líneas
     const { data: order, error: orderError } = await supabase
@@ -46,6 +68,8 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         status: "pending",
         total,
+        discount,
+        coupon_code: appliedCode,
         currency: "eur",
         shipping_name: shipping.name || null,
         shipping_email: shipping.email || null,
@@ -72,6 +96,20 @@ export async function POST(request: NextRequest) {
     }))
     await supabase.from("order_items").insert(orderItems)
 
+    // Contar el uso del cupón (con service role, el usuario no puede escribir en coupons)
+    if (appliedCoupon?.id) {
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      if (serviceKey) {
+        const admin = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey, {
+          auth: { persistSession: false },
+        })
+        await admin
+          .from("coupons")
+          .update({ used_count: (appliedCoupon.used_count || 0) + 1 })
+          .eq("id", appliedCoupon.id)
+      }
+    }
+
     // 2) Si Stripe está configurado, crear sesión de Checkout
     const stripeKey = process.env.STRIPE_SECRET_KEY
     const origin =
@@ -84,8 +122,22 @@ export async function POST(request: NextRequest) {
     }
 
     const stripe = new Stripe(stripeKey)
+
+    // Aplicar el descuento del cupón como coupon de Stripe (importe exacto)
+    let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined
+    if (discount > 0) {
+      const stripeCoupon = await stripe.coupons.create({
+        amount_off: Math.round(discount * 100),
+        currency: "eur",
+        duration: "once",
+        name: appliedCode || "Descuento",
+      })
+      discounts = [{ coupon: stripeCoupon.id }]
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      discounts,
       line_items: lines.map((l) => ({
         quantity: l.quantity,
         price_data: {
