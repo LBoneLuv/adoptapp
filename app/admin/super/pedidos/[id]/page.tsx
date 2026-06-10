@@ -19,6 +19,8 @@ interface Order {
   status: string
   total: number
   discount: number | null
+  shipping_cost: number | null
+  shipping_method: string | null
   coupon_code: string | null
   currency: string
   created_at: string
@@ -79,7 +81,8 @@ export default function AdminOrderDetailPage() {
   }
 
   const badge = ORDER_STATUS[order.status] || ORDER_STATUS.pending
-  const subtotal = order.total + (order.discount || 0)
+  const shippingCost = order.shipping_cost || 0
+  const subtotal = order.total - shippingCost + (order.discount || 0)
 
   return (
     <div className="min-h-screen bg-[#FEF7FF] pb-12">
@@ -174,6 +177,10 @@ export default function AdminOrderDetailPage() {
                 <span>−{order.discount.toFixed(2)}€</span>
               </div>
             ) : null}
+            <div className="flex justify-between text-[#49454F]">
+              <span>Envío{order.shipping_method ? ` (${order.shipping_method === "express" ? "exprés" : "estándar"})` : ""}</span>
+              <span>{shippingCost === 0 ? "Gratis" : `${shippingCost.toFixed(2)}€`}</span>
+            </div>
             <div className="flex justify-between font-bold text-[#1C1B1F] pt-1">
               <span>Total</span>
               <span className="text-[#6750A4]">{order.total.toFixed(2)}€</span>

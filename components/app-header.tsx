@@ -112,6 +112,8 @@ export function AppHeader() {
     if (pathname?.startsWith("/servicios/playas")) return "Playas perrunas"
     if (pathname?.startsWith("/servicios")) return "Servicios"
     if (pathname?.startsWith("/tienda/pedidos")) return "Mis pedidos"
+    if (pathname?.startsWith("/tienda/pedido-ok")) return "Pedido confirmado"
+    if (pathname?.startsWith("/tienda/checkout")) return "Finalizar compra"
     if (pathname?.startsWith("/tienda/carrito")) return "Carrito"
     if (pathname?.startsWith("/tienda/producto")) return "Producto"
     if (pathname?.startsWith("/tienda/categoria")) return "Categoría"

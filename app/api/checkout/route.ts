@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import Stripe from "stripe"
 import { validateCoupon, type CouponRow } from "@/lib/coupon"
 import { sendEmail, orderConfirmationHtml } from "@/lib/email"
+import { shippingCost } from "@/lib/shipping"
 
 interface CartProduct {
   id: string
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const shipping = body?.shipping || {}
     const couponCode = body?.couponCode
+    const shippingMethod = body?.shippingMethod || "standard"
 
     // Cargar el carrito desde el servidor (no confiamos en el cliente para los precios)
     const { data: cart } = await supabase
@@ -60,7 +62,9 @@ export async function POST(request: NextRequest) {
         appliedCoupon = c as CouponRow
       }
     }
-    const total = Math.max(0, subtotal - discount)
+    const afterDiscount = Math.max(0, subtotal - discount)
+    const shipCost = shippingCost(shippingMethod, afterDiscount)
+    const total = afterDiscount + shipCost
 
     // 1) Crear el pedido (pendiente) + líneas
     const { data: order, error: orderError } = await supabase
@@ -71,6 +75,8 @@ export async function POST(request: NextRequest) {
         total,
         discount,
         coupon_code: appliedCode,
+        shipping_method: shippingMethod,
+        shipping_cost: shipCost,
         currency: "eur",
         shipping_name: shipping.name || null,
         shipping_email: shipping.email || null,
@@ -150,23 +156,31 @@ export async function POST(request: NextRequest) {
       discounts = [{ coupon: stripeCoupon.id }]
     }
 
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = lines.map((l) => ({
+      quantity: l.quantity,
+      price_data: {
+        currency: "eur",
+        unit_amount: Math.round((l.product!.price || 0) * 100),
+        product_data: {
+          name: l.product!.name,
+          images: l.product!.image_url ? [l.product!.image_url] : undefined,
+        },
+      },
+    }))
+    if (shipCost > 0) {
+      lineItems.push({
+        quantity: 1,
+        price_data: { currency: "eur", unit_amount: Math.round(shipCost * 100), product_data: { name: "Envío" } },
+      })
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       discounts,
-      line_items: lines.map((l) => ({
-        quantity: l.quantity,
-        price_data: {
-          currency: "eur",
-          unit_amount: Math.round((l.product!.price || 0) * 100),
-          product_data: {
-            name: l.product!.name,
-            images: l.product!.image_url ? [l.product!.image_url] : undefined,
-          },
-        },
-      })),
+      line_items: lineItems,
       customer_email: shipping.email || user.email || undefined,
-      success_url: `${origin}/tienda/carrito?success=1`,
-      cancel_url: `${origin}/tienda/carrito`,
+      success_url: `${origin}/tienda/pedido-ok?order=${order.id}`,
+      cancel_url: `${origin}/tienda/checkout`,
       metadata: { order_id: order.id, user_id: user.id },
     })
 
