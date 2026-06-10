@@ -24,7 +24,7 @@ interface ProfessionalCardProps {
 export const ProfessionalCard = memo(function ProfessionalCard({ professional }: ProfessionalCardProps) {
   const typeLabel = PROFESSIONAL_TYPES[professional.type]?.label
   return (
-    <Link href={`/profesional/${professional.id}`} prefetch={true}>
+    <Link href={`/profesional/${professional.id}`} prefetch={true} className="block">
       <div className="bg-[#FFFBFE] rounded-3xl shadow-md overflow-hidden hover:shadow-lg transition-shadow flex gap-3 p-3">
         {/* Logo a la izquierda */}
         <div className="w-24 h-24 rounded-2xl overflow-hidden relative bg-gradient-to-br from-[#E8DEF8] to-[#D0BCFF] flex-shrink-0 flex items-center justify-center">
