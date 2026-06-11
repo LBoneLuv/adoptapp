@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Truck, Check, ShieldCheck, Ticket, Lock } from "lucide-react"
+import { Truck, Check, ShieldCheck, Ticket, Lock, MapPin, Plus } from "lucide-react"
 import { SHIPPING_METHODS, shippingCost, FREE_SHIPPING_THRESHOLD } from "@/lib/shipping"
 import { validateCoupon, type CouponRow } from "@/lib/coupon"
 
@@ -12,6 +12,17 @@ interface CartLine {
   id: string
   quantity: number
   product: { id: string; name: string; price: number; image_url: string | null; stock: number } | null
+}
+
+interface Address {
+  id: string
+  label: string | null
+  name: string
+  phone: string | null
+  address: string
+  city: string
+  postal_code: string
+  is_default: boolean
 }
 
 const inputCls =
@@ -29,6 +40,9 @@ export default function CheckoutPage() {
   const [ship, setShip] = useState({ name: "", email: "", phone: "", address: "", city: "", postal_code: "" })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [method, setMethod] = useState("standard")
+  const [addresses, setAddresses] = useState<Address[]>([])
+  const [selectedAddrId, setSelectedAddrId] = useState<string>("new")
+  const [saveNew, setSaveNew] = useState(true)
 
   const [couponInput, setCouponInput] = useState("")
   const [coupon, setCoupon] = useState<CouponRow | null>(null)
@@ -59,14 +73,29 @@ export default function CheckoutPage() {
         .select("display_name, email, phone, address, city, postal_code")
         .eq("id", user.id)
         .maybeSingle()
-      if (profile) {
+      const email = profile?.email || user.email || ""
+      // Libreta de direcciones
+      const { data: addrs } = await supabase
+        .from("user_addresses")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false })
+      const list = (addrs as Address[]) || []
+      setAddresses(list)
+      if (list.length > 0) {
+        const def = list.find((a) => a.is_default) || list[0]
+        setSelectedAddrId(def.id)
+        setShip({ name: def.name, email, phone: def.phone || "", address: def.address, city: def.city, postal_code: def.postal_code })
+      } else {
+        setSelectedAddrId("new")
         setShip({
-          name: profile.display_name || "",
-          email: profile.email || user.email || "",
-          phone: profile.phone || "",
-          address: profile.address || "",
-          city: profile.city || "",
-          postal_code: profile.postal_code || "",
+          name: profile?.display_name || "",
+          email,
+          phone: profile?.phone || "",
+          address: profile?.address || "",
+          city: profile?.city || "",
+          postal_code: profile?.postal_code || "",
         })
       }
       setLoading(false)
@@ -81,16 +110,51 @@ export default function CheckoutPage() {
   const shipCost = shippingCost(method, afterDiscount)
   const total = afterDiscount + shipCost
 
+  function selectAddress(a: Address) {
+    setSelectedAddrId(a.id)
+    setShip((s) => ({ ...s, name: a.name, phone: a.phone || "", address: a.address, city: a.city, postal_code: a.postal_code }))
+    setErrors({})
+  }
+
+  function useNewAddress() {
+    setSelectedAddrId("new")
+    setShip((s) => ({ ...s, name: "", phone: "", address: "", city: "", postal_code: "" }))
+  }
+
   function validateShipping() {
     const e: Record<string, string> = {}
-    if (!ship.name.trim()) e.name = "Indica tu nombre"
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ship.email)) e.email = "Email no válido"
-    if (!ship.phone.trim()) e.phone = "Indica un teléfono"
-    if (!ship.address.trim()) e.address = "Indica la dirección"
-    if (!ship.city.trim()) e.city = "Indica la ciudad"
-    if (!/^\d{4,5}$/.test(ship.postal_code)) e.postal_code = "Código postal no válido"
+    if (selectedAddrId === "new") {
+      if (!ship.name.trim()) e.name = "Indica tu nombre"
+      if (!ship.phone.trim()) e.phone = "Indica un teléfono"
+      if (!ship.address.trim()) e.address = "Indica la dirección"
+      if (!ship.city.trim()) e.city = "Indica la ciudad"
+      if (!/^\d{4,5}$/.test(ship.postal_code)) e.postal_code = "Código postal no válido"
+    }
     setErrors(e)
     return Object.keys(e).length === 0
+  }
+
+  async function proceedFromShipping() {
+    if (!validateShipping()) return
+    if (selectedAddrId === "new" && saveNew) {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.from("user_addresses").insert({
+          user_id: user.id,
+          name: ship.name,
+          phone: ship.phone || null,
+          address: ship.address,
+          city: ship.city,
+          postal_code: ship.postal_code,
+          is_default: addresses.length === 0,
+        })
+      }
+    }
+    setStep(1)
   }
 
   async function applyCoupon() {
@@ -169,36 +233,87 @@ export default function CheckoutPage() {
         {/* PASO 1: ENVÍO */}
         {step === 0 && (
           <div className="space-y-3">
-            <h2 className="font-bold text-[#1C1B1F]">Datos de envío</h2>
-            {(
-              [
-                { k: "name", ph: "Nombre completo", type: "text" },
-                { k: "email", ph: "Email", type: "email" },
-                { k: "phone", ph: "Teléfono", type: "tel" },
-                { k: "address", ph: "Dirección (calle, nº, piso)", type: "text" },
-              ] as const
-            ).map((f) => (
-              <div key={f.k}>
-                <input
-                  className={`${inputCls} ${errors[f.k] ? "border-[#C5221F]" : ""}`}
-                  placeholder={f.ph}
-                  type={f.type}
-                  value={(ship as any)[f.k]}
-                  onChange={(e) => setShip({ ...ship, [f.k]: e.target.value })}
-                />
-                {errors[f.k] && <p className="text-xs text-[#C5221F] mt-1 ml-1">{errors[f.k]}</p>}
-              </div>
-            ))}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <input className={`${inputCls} ${errors.city ? "border-[#C5221F]" : ""}`} placeholder="Ciudad" value={ship.city} onChange={(e) => setShip({ ...ship, city: e.target.value })} />
-                {errors.city && <p className="text-xs text-[#C5221F] mt-1 ml-1">{errors.city}</p>}
-              </div>
-              <div>
-                <input className={`${inputCls} ${errors.postal_code ? "border-[#C5221F]" : ""}`} placeholder="Código postal" value={ship.postal_code} onChange={(e) => setShip({ ...ship, postal_code: e.target.value })} />
-                {errors.postal_code && <p className="text-xs text-[#C5221F] mt-1 ml-1">{errors.postal_code}</p>}
-              </div>
+            {/* Email */}
+            <div>
+              <label className="text-sm font-medium text-[#49454F] block mb-1">Email de contacto</label>
+              <input
+                className={`${inputCls} ${errors.email ? "border-[#C5221F]" : ""}`}
+                type="email"
+                placeholder="tu@email.com"
+                value={ship.email}
+                onChange={(e) => setShip({ ...ship, email: e.target.value })}
+              />
+              {errors.email && <p className="text-xs text-[#C5221F] mt-1 ml-1">{errors.email}</p>}
             </div>
+
+            <h2 className="font-bold text-[#1C1B1F] pt-2">Dirección de envío</h2>
+
+            {/* Direcciones guardadas */}
+            {addresses.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => selectAddress(a)}
+                className={`w-full text-left p-4 rounded-2xl border-2 transition-colors ${selectedAddrId === a.id ? "border-[#6750A4] bg-[#E8DEF8]" : "border-[#E8DEF8] bg-[#FFFBFE]"}`}
+              >
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-[#6750A4] mt-0.5 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-[#1C1B1F]">
+                      {a.label || a.name}
+                      {a.is_default && <span className="ml-2 text-[10px] font-bold text-[#1E7E34]">Por defecto</span>}
+                    </p>
+                    <p className="text-xs text-[#49454F]">{a.name} · {a.address}, {a.postal_code} {a.city}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+
+            {/* Nueva dirección */}
+            <button
+              onClick={useNewAddress}
+              className={`w-full flex items-center gap-2 p-4 rounded-2xl border-2 transition-colors ${selectedAddrId === "new" ? "border-[#6750A4] bg-[#E8DEF8]" : "border-[#E8DEF8] bg-[#FFFBFE]"}`}
+            >
+              <Plus className="w-5 h-5 text-[#6750A4]" />
+              <span className="font-medium text-sm text-[#1C1B1F]">Usar una dirección nueva</span>
+            </button>
+
+            {/* Formulario de dirección nueva */}
+            {selectedAddrId === "new" && (
+              <div className="space-y-3 pt-1">
+                {(
+                  [
+                    { k: "name", ph: "Nombre completo", type: "text" },
+                    { k: "phone", ph: "Teléfono", type: "tel" },
+                    { k: "address", ph: "Dirección (calle, nº, piso)", type: "text" },
+                  ] as const
+                ).map((f) => (
+                  <div key={f.k}>
+                    <input
+                      className={`${inputCls} ${errors[f.k] ? "border-[#C5221F]" : ""}`}
+                      placeholder={f.ph}
+                      type={f.type}
+                      value={(ship as any)[f.k]}
+                      onChange={(e) => setShip({ ...ship, [f.k]: e.target.value })}
+                    />
+                    {errors[f.k] && <p className="text-xs text-[#C5221F] mt-1 ml-1">{errors[f.k]}</p>}
+                  </div>
+                ))}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <input className={`${inputCls} ${errors.city ? "border-[#C5221F]" : ""}`} placeholder="Ciudad" value={ship.city} onChange={(e) => setShip({ ...ship, city: e.target.value })} />
+                    {errors.city && <p className="text-xs text-[#C5221F] mt-1 ml-1">{errors.city}</p>}
+                  </div>
+                  <div>
+                    <input className={`${inputCls} ${errors.postal_code ? "border-[#C5221F]" : ""}`} placeholder="Código postal" value={ship.postal_code} onChange={(e) => setShip({ ...ship, postal_code: e.target.value })} />
+                    {errors.postal_code && <p className="text-xs text-[#C5221F] mt-1 ml-1">{errors.postal_code}</p>}
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={saveNew} onChange={(e) => setSaveNew(e.target.checked)} className="w-4 h-4 rounded accent-[#6750A4]" />
+                  <span className="text-sm text-[#49454F]">Guardar en mi libreta de direcciones</span>
+                </label>
+              </div>
+            )}
 
             <h2 className="font-bold text-[#1C1B1F] pt-3">Método de envío</h2>
             {SHIPPING_METHODS.map((m) => {
@@ -309,10 +424,7 @@ export default function CheckoutPage() {
         )}
         {step < 2 ? (
           <Button
-            onClick={() => {
-              if (step === 0 && !validateShipping()) return
-              setStep((s) => s + 1)
-            }}
+            onClick={() => (step === 0 ? proceedFromShipping() : setStep(2))}
             className="flex-1 bg-[#6750A4] hover:bg-[#7965AF] text-white rounded-full h-12 text-base font-semibold"
           >
             Continuar

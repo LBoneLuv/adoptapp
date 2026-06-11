@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { User, Package, Heart, MessageSquare, LogOut, ChevronRight, Coffee, Check } from "lucide-react"
+import { User, Package, Heart, MessageSquare, LogOut, ChevronRight, Coffee, Check, MapPin } from "lucide-react"
 
 const DONATION_AMOUNTS = [3, 5, 10, 20]
 
@@ -85,7 +85,8 @@ export default function PerfilPage() {
   }
 
   const menu = [
-    { href: "/perfil/editar", label: "Editar perfil", desc: "Foto, nombre, dirección…", icon: User },
+    { href: "/perfil/editar", label: "Editar perfil", desc: "Foto, nombre, teléfono…", icon: User },
+    { href: "/perfil/direcciones", label: "Mis direcciones", desc: "Tu libreta de direcciones de envío", icon: MapPin },
     { href: "/tienda/pedidos", label: "Mis pedidos", desc: "Estado de tus compras", icon: Package },
     { href: "/favoritos", label: "Mis favoritos", desc: "Mascotas y productos guardados", icon: Heart },
     { href: "/perfil/sugerencias", label: "Sugerencias y mejoras", desc: "Cuéntanos ideas o errores", icon: MessageSquare },

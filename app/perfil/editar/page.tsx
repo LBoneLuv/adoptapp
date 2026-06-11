@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { Camera, ArrowLeft } from "lucide-react"
+import { Camera, ArrowLeft, MapPin, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
@@ -22,9 +22,6 @@ export default function EditarPerfilPage() {
     email: "",
     phone: "",
     avatar_url: "",
-    address: "",
-    city: "",
-    postal_code: "",
   })
 
   useEffect(() => {
@@ -44,9 +41,6 @@ export default function EditarPerfilPage() {
           email: data.email || user.email || "",
           phone: data.phone || "",
           avatar_url: data.avatar_url || "",
-          address: data.address || "",
-          city: data.city || "",
-          postal_code: data.postal_code || "",
         })
       }
       setLoading(false)
@@ -68,9 +62,6 @@ export default function EditarPerfilPage() {
         display_name: profile.display_name,
         email: profile.email,
         phone: profile.phone,
-        address: profile.address,
-        city: profile.city,
-        postal_code: profile.postal_code,
       })
       .eq("id", user.id)
     setSaving(false)
@@ -156,26 +147,19 @@ export default function EditarPerfilPage() {
               <Input type="tel" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder="+34 600 000 000" className={fieldCls} />
             </div>
 
-            <div className="pt-4 border-t border-[#E7E0EC]">
-              <h3 className="text-sm font-bold text-[#1C1B1F] mb-1">Dirección de envío</h3>
-              <p className="text-xs text-[#79747E] mb-4">Se usará para autocompletar tus compras en la tienda.</p>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#1C1B1F] block">Dirección</label>
-                  <Input value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} placeholder="Calle, número, piso" className={fieldCls} />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[#1C1B1F] block">Ciudad</label>
-                    <Input value={profile.city} onChange={(e) => setProfile({ ...profile, city: e.target.value })} placeholder="Ciudad" className={fieldCls} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[#1C1B1F] block">Código postal</label>
-                    <Input value={profile.postal_code} onChange={(e) => setProfile({ ...profile, postal_code: e.target.value })} placeholder="00000" className={fieldCls} />
-                  </div>
-                </div>
+            <Link
+              href="/perfil/direcciones"
+              className="flex items-center gap-3 bg-[#FFFBFE] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow border border-[#E8DEF8]"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#E8DEF8] flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-5 h-5 text-[#6750A4]" />
               </div>
-            </div>
+              <div className="flex-1">
+                <p className="font-semibold text-[#1C1B1F] text-sm">Mis direcciones</p>
+                <p className="text-xs text-[#79747E]">Gestiona tu libreta de direcciones de envío</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-[#79747E]" />
+            </Link>
           </div>
 
           <Button onClick={handleSave} disabled={saving} className="w-full mt-8 bg-[#6750A4] hover:bg-[#7965AF] text-white rounded-full h-12 text-base font-semibold shadow-lg disabled:opacity-50">
