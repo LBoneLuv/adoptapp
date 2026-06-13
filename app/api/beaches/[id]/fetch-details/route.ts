@@ -64,6 +64,7 @@ async function scrapeBeachDetails(url: string) {
           url.includes("wp-content/uploads") &&
           !url.includes("-150x150") &&
           !url.includes("-300x") &&
+          !url.includes("cropped-logo") &&
           !url.includes("cdn.playasparaperros.com/fotos/playasparaperros-")
         ) {
           photosUrls.push(url)
@@ -81,6 +82,7 @@ async function scrapeBeachDetails(url: string) {
           url.includes("wp-content/uploads") &&
           !url.includes("-150x150") &&
           !url.includes("-300x") &&
+          !url.includes("cropped-logo") &&
           !url.includes("cdn.playasparaperros.com")
         ) {
           photosUrls.push(url)

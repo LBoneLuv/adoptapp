@@ -14,7 +14,38 @@ export function normalizeBeachImage(url: string | null | undefined): string | nu
   return out
 }
 
+// Imágenes "basura" que no son fotos de la playa: el logo/banner del sitio
+// (cropped-logo-playas-perros…) que el scraper recoge en casi todas las playas.
+const JUNK_PATTERNS = [/cropped-logo/i, /logo-playas-perros/i, /placeholder/i]
+
+export function isJunkBeachImage(url: string | null | undefined): boolean {
+  if (!url) return true
+  return JUNK_PATTERNS.some((p) => p.test(url))
+}
+
 export function normalizeBeachPhotos(urls: string[] | null | undefined): string[] {
   if (!urls) return []
-  return urls.map((u) => normalizeBeachImage(u)).filter((u): u is string => !!u)
+  return urls
+    .map((u) => normalizeBeachImage(u))
+    .filter((u): u is string => !!u && !isJunkBeachImage(u))
+}
+
+// Candidatas para la imagen de cabecera, en orden de preferencia:
+// la image_url y luego las fotos de la galería (sin basura ni duplicados).
+// Así, si la image_url está rota (p.ej. googleusercontent caducado), se usa
+// la primera foto válida de la galería.
+export function beachHeaderSources(
+  imageUrl: string | null | undefined,
+  photos: string[] | null | undefined,
+): string[] {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const c of [imageUrl, ...(photos || [])]) {
+    const n = normalizeBeachImage(c)
+    if (n && !isJunkBeachImage(n) && !seen.has(n)) {
+      seen.add(n)
+      out.push(n)
+    }
+  }
+  return out
 }

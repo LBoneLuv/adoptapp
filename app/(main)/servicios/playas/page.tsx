@@ -8,19 +8,21 @@ import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import dynamic from "next/dynamic"
-import { normalizeBeachImage, normalizeBeachPhotos } from "@/lib/beach-image"
+import { normalizeBeachImage, normalizeBeachPhotos, beachHeaderSources } from "@/lib/beach-image"
 
-// Imagen de playa con fallback (lila + patita) cuando no hay foto o falla.
-function BeachImage({ src, alt, className }: { src: string | null; alt: string; className?: string }) {
-  const [err, setErr] = useState(false)
-  if (!src || err) {
+// Imagen de playa: prueba varias fuentes (cabecera + galería) en orden y, si
+// todas fallan o no hay ninguna, muestra el fallback (lila + patita).
+function BeachImage({ sources, alt, className }: { sources: string[]; alt: string; className?: string }) {
+  const [idx, setIdx] = useState(0)
+  const src = sources[idx]
+  if (!src) {
     return (
       <div className={`${className} bg-gradient-to-br from-[#E8DEF8] to-[#D0BCFF] flex items-center justify-center`}>
         <PawPrint className="w-1/3 h-1/3 max-w-16 max-h-16 text-[#6750A4]/60" />
       </div>
     )
   }
-  return <img src={src || "/placeholder.svg"} alt={alt} className={className} onError={() => setErr(true)} />
+  return <img key={src} src={src} alt={alt} className={className} onError={() => setIdx((i) => i + 1)} />
 }
 
 const BeachesMap = dynamic(() => import("@/components/beaches-map"), {
@@ -200,7 +202,7 @@ export default function PlayasPage() {
             >
               <div className="flex gap-3">
                 <BeachImage
-                  src={beach.image_url}
+                  sources={beachHeaderSources(beach.image_url, beach.photos_urls)}
                   alt={beach.name}
                   className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
                 />
@@ -234,7 +236,11 @@ export default function PlayasPage() {
           {selectedBeach && (
             <div className="relative">
               <div className="relative h-40 w-full">
-                <BeachImage src={selectedBeach.image_url} alt={selectedBeach.name} className="w-full h-full object-cover" />
+                <BeachImage
+                  sources={beachHeaderSources(selectedBeach.image_url, selectedBeach.photos_urls)}
+                  alt={selectedBeach.name}
+                  className="w-full h-full object-cover"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
                 <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
