@@ -3,100 +3,147 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { normalizeBeachImage, normalizeBeachPhotos } from "@/lib/beach-image"
 
+// Quita acentos y pasa a minúsculas (para comparar textos de cabecera).
+function deaccent(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+}
+
+// Convierte un fragmento HTML en texto legible (conserva saltos de línea).
+function htmlToText(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|li|h[1-6]|div)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&aacute;/gi, "á")
+    .replace(/&eacute;/gi, "é")
+    .replace(/&iacute;/gi, "í")
+    .replace(/&oacute;/gi, "ó")
+    .replace(/&uacute;/gi, "ú")
+    .replace(/&ntilde;/gi, "ñ")
+    .replace(/&#8230;/g, "…")
+    .replace(/&[a-z#0-9]+;/gi, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n[ \t]*/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+}
+
+interface Heading {
+  text: string
+  start: number
+  end: number
+}
+
+function getHeadings(html: string): Heading[] {
+  const out: Heading[] = []
+  const re = /<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi
+  let m: RegExpExecArray | null
+  while ((m = re.exec(html)) !== null) {
+    const text = deaccent(m[2].replace(/<[^>]+>/g, " ").replace(/&[a-z#0-9]+;/gi, " "))
+      .replace(/\s+/g, " ")
+      .trim()
+    out.push({ text, start: m.index, end: m.index + m[0].length })
+  }
+  return out
+}
+
+// Devuelve el HTML que hay entre una cabecera cuyo texto contiene alguna de las
+// palabras clave y la siguiente cabecera.
+function sectionHtml(html: string, headings: Heading[], keywords: string[]): string | null {
+  for (let i = 0; i < headings.length; i++) {
+    if (keywords.some((k) => headings[i].text.includes(k))) {
+      const start = headings[i].end
+      const end = i + 1 < headings.length ? headings[i + 1].start : html.length
+      return html.slice(start, end)
+    }
+  }
+  return null
+}
+
 async function scrapeBeachDetails(url: string) {
   try {
-    const response = await fetch(url)
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+        "Accept-Language": "es-ES,es;q=0.9",
+      },
+    })
     const html = await response.text()
+    const headings = getHeadings(html)
 
-    const descriptionMatch = html.match(/<p[^>]*>((?:(?!<\/p>).)*?(?:playa|perro|arena|kilómetro|metro)[^<]*?)<\/p>/is)
-    let fullDescription = null
-
-    if (descriptionMatch) {
-      fullDescription = descriptionMatch[1]
-        .replace(/<[^>]+>/g, "")
-        .replace(/&nbsp;/g, " ")
-        .replace(/\s+/g, " ")
-        .trim()
-    }
-
-    const howToGetMatch = html.match(/Cómo llegar[^<]*<\/h3>(.*?)(?=<h[23]|$)/is)
-    const howToGet = howToGetMatch
-      ? howToGetMatch[1]
-          .replace(/<[^>]+>/g, "")
-          .replace(/&nbsp;/g, " ")
-          .trim()
-          .substring(0, 500)
-      : null
-
-    const rulesMatch = html.match(/Normas[^<]*<\/h3>(.*?)(?=<h[23]|$)/is)
-    let rules = null
-    if (rulesMatch) {
-      const rulesHtml = rulesMatch[1]
-      const listItems = rulesHtml.match(/<li[^>]*>(.*?)<\/li>/gi) || []
-      rules = listItems
-        .map((item) => "• " + item.replace(/<[^>]*>/g, "").trim())
-        .join("\n")
-        .trim()
-      if (!rules) {
-        rules = rulesHtml
-          .replace(/<[^>]*>/g, "")
-          .replace(/&nbsp;/g, " ")
-          .trim()
+    // Descripción: primeros párrafos que hablan de la playa.
+    const paras: string[] = []
+    for (const m of html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)) {
+      const t = htmlToText(m[1])
+      if (t.length > 40 && /playa|perro|arena|ba[ñn]o|costa|cala|litoral/i.test(t)) {
+        paras.push(t)
+        if (paras.length >= 4) break
       }
     }
+    const description = paras.length ? paras.join("\n\n") : null
 
-    const servicesMatch = html.match(/Servicios[^<]*<\/h3>(.*?)(?=<h[23]|$)/is)
-    const services = servicesMatch
-      ? servicesMatch[1]
-          .replace(/<[^>]+>/g, "")
-          .replace(/&nbsp;/g, " ")
-          .trim()
-      : null
+    // Cómo llegar: la sección bajo la cabecera; si va vacía (p.ej. solo el mapa),
+    // se busca un párrafo con indicaciones de acceso.
+    const howToSection = sectionHtml(html, headings, ["como llegar"])
+    let howToGet = howToSection ? htmlToText(howToSection).slice(0, 900) : ""
+    if (!howToGet || howToGet.length < 25) {
+      for (const m of html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)) {
+        const t = htmlToText(m[1])
+        if (
+          t.length > 40 &&
+          /(c[oó]mo llegar|en coche|carretera|acceso|aparca|gps|coordenadas|autov[ií]a|salida \d|se encuentra)/i.test(t)
+        ) {
+          howToGet = t
+          break
+        }
+      }
+    }
+    const howToGetFinal = howToGet || null
 
-    const photosSectionMatch = html.match(/(?:Fotos|Vídeos)[^<]*<\/h3>(.*?)(?=Alojamientos|$)/is)
+    // Normas (como lista si las hay)
+    const rulesSection = sectionHtml(html, headings, ["normas", "reglas"])
+    let rules: string | null = null
+    if (rulesSection) {
+      const items = [...rulesSection.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
+        .map((x) => htmlToText(x[1]))
+        .filter((t) => t.length > 1)
+      rules = items.length ? items.map((i) => "• " + i).join("\n") : htmlToText(rulesSection).slice(0, 900) || null
+    }
+
+    // Servicios / instalaciones
+    const servicesSection = sectionHtml(html, headings, ["servicios", "instalaciones", "equipamiento"])
+    const services = servicesSection ? htmlToText(servicesSection).slice(0, 700) || null : null
+
+    // Fotos: de la sección de fotos; si no, imágenes de contenido antes de "Alojamientos".
+    const isPhoto = (u: string) =>
+      u.includes("wp-content/uploads") &&
+      !/-\d+x\d+\./.test(u) &&
+      !/cropped-logo|logo-playas-perros|gravatar|wpgmza|\/emoji\/|\/avatar/i.test(u)
     const photosUrls: string[] = []
-
-    if (photosSectionMatch) {
-      const imgMatches = photosSectionMatch[1].matchAll(/<img[^>]+src=["']([^"']+)["']/g)
-      for (const match of imgMatches) {
-        const url = match[1]
-        if (
-          url.includes("wp-content/uploads") &&
-          !url.includes("-150x150") &&
-          !url.includes("-300x") &&
-          !url.includes("cropped-logo") &&
-          !url.includes("cdn.playasparaperros.com/fotos/playasparaperros-")
-        ) {
-          photosUrls.push(url)
-        }
-      }
-    }
-
-    // Si no hay fotos en la sección de Fotos, buscar antes de Alojamientos
-    if (photosUrls.length === 0) {
-      const beforeAccommodations = html.split(/Alojamientos/i)[0]
-      const imgMatches = beforeAccommodations.matchAll(/<img[^>]+src=["']([^"']+)["']/g)
-      for (const match of imgMatches) {
-        const url = match[1]
-        if (
-          url.includes("wp-content/uploads") &&
-          !url.includes("-150x150") &&
-          !url.includes("-300x") &&
-          !url.includes("cropped-logo") &&
-          !url.includes("cdn.playasparaperros.com")
-        ) {
-          photosUrls.push(url)
-          if (photosUrls.length >= 5) break
-        }
+    const photosSection = sectionHtml(html, headings, ["fotos", "videos", "galeria", "imagenes"])
+    const scope = photosSection || html.split(/Alojamientos|Hoteles y Apartamentos/i)[0]
+    for (const m of scope.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)) {
+      const u = m[1]
+      if (isPhoto(u) && !photosUrls.includes(u)) {
+        photosUrls.push(u)
+        if (photosUrls.length >= 8) break
       }
     }
 
     return {
-      description: fullDescription,
-      howToGet,
+      description,
+      howToGet: howToGetFinal,
       rules,
       services,
-      photosUrls: normalizeBeachPhotos(photosUrls.slice(0, 10)),
+      photosUrls: normalizeBeachPhotos(photosUrls),
     }
   } catch (error) {
     console.error("Error scraping beach details:", error)
@@ -131,7 +178,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Playa no encontrada" }, { status: 404 })
     }
 
-    if (beach.details_fetched) {
+    const force = request.nextUrl.searchParams.get("force") === "1"
+    if (beach.details_fetched && !force) {
       return NextResponse.json({ message: "Detalles ya obtenidos anteriormente" })
     }
 
@@ -145,17 +193,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Error al obtener detalles" }, { status: 500 })
     }
 
-    const { error: updateError } = await supabase
-      .from("dog_beaches")
-      .update({
-        description: details.description,
-        how_to_get: details.howToGet,
-        rules: details.rules,
-        services: details.services,
-        photos_urls: details.photosUrls,
-        details_fetched: true,
-      })
-      .eq("id", beachId)
+    // No sobrescribir texto existente con null (solo mejorar/añadir); las fotos
+    // sí se refrescan siempre (para quitar el banner del logo).
+    const update: Record<string, unknown> = {
+      photos_urls: details.photosUrls,
+      details_fetched: true,
+    }
+    if (details.description) update.description = details.description
+    if (details.howToGet) update.how_to_get = details.howToGet
+    if (details.rules) update.rules = details.rules
+    if (details.services) update.services = details.services
+
+    const { error: updateError } = await supabase.from("dog_beaches").update(update).eq("id", beachId)
 
     if (updateError) {
       console.error("Error updating beach:", updateError)

@@ -38,14 +38,18 @@ export function beachHeaderSources(
   imageUrl: string | null | undefined,
   photos: string[] | null | undefined,
 ): string[] {
-  const out: string[] = []
+  const uniq: string[] = []
   const seen = new Set<string>()
   for (const c of [imageUrl, ...(photos || [])]) {
     const n = normalizeBeachImage(c)
     if (n && !isJunkBeachImage(n) && !seen.has(n)) {
       seen.add(n)
-      out.push(n)
+      uniq.push(n)
     }
   }
-  return out
+  // Las URLs de googleusercontent (enlaces firmados) suelen cargar "en blanco"
+  // o estar caducadas → se prueban las últimas, priorizando las fotos fiables.
+  const reliable = uniq.filter((u) => !/googleusercontent\.com/i.test(u))
+  const unreliable = uniq.filter((u) => /googleusercontent\.com/i.test(u))
+  return [...reliable, ...unreliable]
 }
